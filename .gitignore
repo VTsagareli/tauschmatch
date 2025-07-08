@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+tauschmatch-firebase-adminsdk-fbsvc-2a43fd8cee
 
 # debug
 npm-debug.log*

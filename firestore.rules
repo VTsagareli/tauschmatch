@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow users to read and write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow authenticated users to read listings (and public read for debugging)
+    match /listings/{listingId} {
+      allow read: if true; // Temporarily allow public read for debugging
+      allow write: if false; // Only allow admin writes for now
+    }
+    
+    // Allow authenticated users to read and write their own matches
+    match /matches/{matchId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         request.resource.data.userId == request.auth.uid);
+    }
+    
+    // Allow authenticated users to read and write their own saved listings
+    match /savedListings/{savedId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         request.resource.data.userId == request.auth.uid);
+    }
+  }
+} 
