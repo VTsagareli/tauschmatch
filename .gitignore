@@ -24,6 +24,7 @@
 .DS_Store
 *.pem
 tauschmatch-firebase-adminsdk-fbsvc-2a43fd8cee
+serviceAccountKey.json
 
 # debug
 npm-debug.log*

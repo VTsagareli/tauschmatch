@@ -1,13 +1,18 @@
 // USAGE:
-// 1. Download your Firebase service account key from the Firebase Console
-//    (Project Settings > Service Accounts > Generate new private key)
-// 2. Save it as serviceAccountKey.json in the project root (add to .gitignore!)
-// 3. Run this script with: npm run run:script --name=importListingsToFirestore
+// 1. Add Firebase Admin SDK environment variables to .env.local:
+//    FIREBASE_PROJECT_ID=your_project_id
+//    FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+//    FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxx@your-project.iam.gserviceaccount.com
+// 2. Run this script with: npm run run:script --name=importListingsToFirestore
 
 import admin from "firebase-admin";
-import * as fs from "fs";
 
-const serviceAccount = JSON.parse(fs.readFileSync("serviceAccountKey.json", "utf-8"));
+// Use environment variables for Firebase Admin SDK
+const serviceAccount = {
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+};
 
 if (!admin.apps.length) {
   admin.initializeApp({
