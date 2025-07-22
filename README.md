@@ -42,8 +42,8 @@ A Next.js application for finding apartment exchanges in Berlin using AI-powered
    ```
 
 4. Run the development server:
-   ```bash
-   npm run dev
+```bash
+npm run dev
    ```
 
 ## AI-Powered Matching

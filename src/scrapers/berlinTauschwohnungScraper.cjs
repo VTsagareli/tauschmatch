@@ -1,28 +1,7 @@
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin = require('puppeteer-extra-plugin-stealth');
-import * as fs from 'fs';
-
-export interface Listing {
-  link: string;
-  district: string;
-  type: string;
-  coldRent: number;
-  extraCosts: number;
-  deposit: number;
-  floor: number;
-  petsAllowed: boolean;
-  balconyOrTerrace: boolean;
-  rooms: number;
-  squareMeters: number;
-  features?: string[];
-  heating?: string;
-  flooring?: string;
-  wbs?: boolean;
-  description?: string;
-  images?: string[];
-  contactName?: string;
-  address?: string;
-}
+// Convert to CommonJS
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const fs = require('fs');
 
 puppeteer.use(StealthPlugin());
 
@@ -32,7 +11,7 @@ async function scrapeTauschwohnungBerlin() {
   const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
   
-  const allLinks: string[] = [];
+  const allLinks = [];
   const pagesToScrape = 5; // Scrape 5 pages
   
   // Scrape multiple pages to get more listings
@@ -51,8 +30,8 @@ async function scrapeTauschwohnungBerlin() {
     }
 
     // Get all listing links from this page
-    const pageLinks: string[] = await page.evaluate(() => {
-      const anchors = Array.from(document.querySelectorAll('a')) as HTMLAnchorElement[];
+    const pageLinks = await page.evaluate(() => {
+      const anchors = Array.from(document.querySelectorAll('a'));
       return anchors
         .map(a => a.href)
         .filter(href => href.includes('/wohnung-mieten/berlin/') && /\d+$/.test(href))
@@ -73,7 +52,7 @@ async function scrapeTauschwohnungBerlin() {
   const uniqueLinks = [...new Set(allLinks)];
   console.log(`\n=== Total unique listings found: ${uniqueLinks.length} ===`);
 
-  const listings: Listing[] = [];
+  const listings = [];
 
   for (const [i, link] of uniqueLinks.entries()) {
     console.log(`Processing listing ${i + 1}/${uniqueLinks.length}: ${link}`);
@@ -87,9 +66,9 @@ async function scrapeTauschwohnungBerlin() {
         require('fs').writeFileSync('first_detail_page.html', html);
       }
       const data = await detailPage.evaluate(() => {
-        const parseNumber = (str: string) => Number(str.replace(/[^\d,.]/g, '').replace(',', '.'));
-        const getText = (sel: string) => document.querySelector(sel)?.textContent?.trim() || '';
-        const getFeature = (key: string) => {
+        const parseNumber = (str) => Number(str.replace(/[^\d,.]/g, '').replace(',', '.'));
+        const getText = (sel) => document.querySelector(sel)?.textContent?.trim() || '';
+        const getFeature = (key) => {
           const dl = Array.from(document.querySelectorAll('.features-table dl'));
           for (const d of dl) {
             const dt = d.querySelector('dt')?.textContent?.trim();
@@ -130,11 +109,22 @@ async function scrapeTauschwohnungBerlin() {
         const heating = getFeature('Heizung');
         const flooring = getFeature('Fußboden');
         const wbs = (getFeature('Sonstige Merkmale') || '').toLowerCase().includes('berechtigungsschein');
-        // Description
+        // Description (offered)
         let description = '';
+        let offeredDescription = '';
+        let lookingForDescription = '';
         const descArticle = Array.from(document.querySelectorAll('article')).find(a => a.querySelector('h2')?.textContent?.includes('Beschreibung'));
         if (descArticle) {
           description = descArticle.querySelector('.content')?.textContent?.trim() || '';
+          offeredDescription = description;
+        }
+        // Try to extract 'Suche', 'Sucht', or 'Tausch' section for lookingForDescription
+        const lookingForArticle = Array.from(document.querySelectorAll('article')).find(a => {
+          const h2 = a.querySelector('h2')?.textContent?.toLowerCase() || '';
+          return h2.includes('suche') || h2.includes('sucht') || h2.includes('tausch');
+        });
+        if (lookingForArticle) {
+          lookingForDescription = lookingForArticle.querySelector('.content')?.textContent?.trim() || '';
         }
         // Contact name (if available)
         let contactName = '';
@@ -145,6 +135,35 @@ async function scrapeTauschwohnungBerlin() {
         }
         // Link
         const link = window.location.href;
+        // Scrape images (first real image)
+        let images = [];
+        // Try to find images in the gallery or main image container
+        const galleryImgs = Array.from(document.querySelectorAll('.gallery img, .image-gallery img, .swiper img, .main-image img'));
+        images = galleryImgs
+          .map(img => img.src)
+          .filter(src =>
+            src &&
+            !src.includes('logo') &&
+            !src.includes('consentmanager') &&
+            !src.includes('placeholder') &&
+            !src.endsWith('.svg')
+          );
+        // Fallback: any img in the main content, but filter out logos/generic images
+        if (images.length === 0) {
+          const fallbackImgs = Array.from(document.querySelectorAll('img'));
+          images = fallbackImgs
+            .map(img => img.src)
+            .filter(src =>
+              src &&
+              !src.includes('logo') &&
+              !src.includes('consentmanager') &&
+              !src.includes('placeholder') &&
+              !src.endsWith('.svg')
+            );
+        }
+        if (images.length > 0) {
+          images = [images[0]]; // Only keep the first real image
+        }
         return {
           link,
           district,
@@ -163,19 +182,22 @@ async function scrapeTauschwohnungBerlin() {
           flooring,
           wbs,
           description,
+          offeredDescription,
+          lookingForDescription,
           contactName,
           address,
+          images,
         };
       });
       console.log(`  ✓ Data extracted successfully`);
       // Check for required fields
       const requiredFields = ['link', 'coldRent', 'rooms', 'squareMeters', 'title', 'district', 'type'];
-      const missing = requiredFields.filter(f => !((data as any)[f]) && (data as any)[f] !== 0);
+      const missing = requiredFields.filter(f => !(data[f]) && data[f] !== 0);
       console.log(`Listing ${i + 1}: ${link}`);
-      console.log('Field values:', requiredFields.map(f => `${f}: ${JSON.stringify((data as any)[f])}`).join(', '));
+      console.log('Field values:', requiredFields.map(f => `${f}: ${JSON.stringify(data[f])}`).join(', '));
       if (missing.length > 0) {
         console.warn(`Skipping listing (missing fields: ${missing.join(', ')}): ${link}`);
-        console.warn('Field values:', requiredFields.map(f => `${f}: ${JSON.stringify((data as any)[f])}`).join(', '));
+        console.warn('Field values:', requiredFields.map(f => `${f}: ${JSON.stringify(data[f])}`).join(', '));
         await detailPage.close();
         continue;
       }

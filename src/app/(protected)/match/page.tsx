@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ApartmentForm, { ApartmentFormData } from "@/components/ApartmentForm";
 import Sidebar from "@/components/Sidebar";
 import AuthGuard from "@/components/AuthGuard";
@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { userService } from "@/services/userService";
 import { matchService, MatchResult } from "@/services/matchService";
 import { User } from "@/types";
+import { FaCheck } from 'react-icons/fa';
 
 const initialForm: ApartmentFormData = {
   type: "Apartment",
@@ -38,6 +39,8 @@ export default function MatchPage() {
   const [matches, setMatches] = useState<MatchResult[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const yourApartmentRef = useRef<HTMLDivElement>(null);
+  const [yourApartmentHeight, setYourApartmentHeight] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -45,6 +48,16 @@ export default function MatchPage() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  useEffect(() => {
+    function syncHeight() {
+      const h1 = yourApartmentRef.current?.offsetHeight || 0;
+      setYourApartmentHeight(h1);
+    }
+    syncHeight();
+    window.addEventListener('resize', syncHeight);
+    return () => window.removeEventListener('resize', syncHeight);
+  }, [myApartment, step]);
 
   // Check if forms are complete
   const requiredMyApartmentFields = [
@@ -66,20 +79,32 @@ export default function MatchPage() {
     
     setLoadingMatches(true);
     try {
+      console.log('Loading user and matches...');
       // Get current user data
       const user = await userService.getUser(auth.user.uid);
       setCurrentUser(user);
+      console.log('User loaded:', user ? 'yes' : 'no');
+      console.log('User data:', user);
       
       if (user) {
         // Find matches using AI-powered matching
+        console.log('Finding matches...');
+        // This now calls the client-side function which fetches from the API
         const matchResults = await matchService.findMatches(user, {}, 10);
+        console.log('Matches found:', matchResults.length);
+        console.log('Match results:', matchResults);
+        
         setMatches(matchResults);
+      } else {
+        console.log('❌ No user data found');
+        setError('No user data found. Please complete your profile first.');
       }
     } catch (error) {
       console.error('Error loading matches:', error);
       setError('Failed to load matches');
     } finally {
       setLoadingMatches(false);
+      console.log('Loading matches completed');
     }
   };
 
@@ -95,17 +120,21 @@ export default function MatchPage() {
         email: auth.user.email || "",
         displayName: auth.user.displayName || "",
         myApartment: {
-          street: myApartment.street || "",
-          number: myApartment.number || "",
-          zipcode: myApartment.zipcode || "",
-          city: "Berlin",
-          type: myApartment.type,
-          rooms: myApartment.rooms,
-          squareMeters: myApartment.squareMeters,
-          coldRent: myApartment.coldRent,
-          floor: myApartment.floor,
-          balcony: myApartment.balcony ?? false,
-          petsAllowed: myApartment.petsAllowed ?? false,
+          ...myApartment,
+          myApartmentDescription: myApartment.myApartmentDescription || ""
+        },
+        lookingFor: {
+          districts: lookingFor.districts || [],
+          street: lookingFor.lookingStreet || "",
+          number: lookingFor.lookingNumber || "",
+          type: lookingFor.type,
+          minRooms: lookingFor.minRooms,
+          minSquareMeters: lookingFor.minSquareMeters,
+          maxColdRent: lookingFor.maxColdRent,
+          floor: lookingFor.floor,
+          balcony: lookingFor.balcony ?? false,
+          petsAllowed: lookingFor.petsAllowed ?? false,
+          lookingForDescription: lookingFor.lookingForDescription || ""
         },
       });
       setStep(2);
@@ -126,6 +155,10 @@ export default function MatchPage() {
         uid: auth.user.uid,
         email: auth.user.email || "",
         displayName: auth.user.displayName || "",
+        myApartment: {
+          ...myApartment,
+          myApartmentDescription: myApartment.myApartmentDescription || ""
+        },
         lookingFor: {
           districts: lookingFor.districts || [],
           street: lookingFor.lookingStreet || "",
@@ -137,13 +170,16 @@ export default function MatchPage() {
           floor: lookingFor.floor,
           balcony: lookingFor.balcony ?? false,
           petsAllowed: lookingFor.petsAllowed ?? false,
+          lookingForDescription: lookingFor.lookingForDescription || ""
         },
       });
-      setSuccess("Your preferences have been saved!");
-      setShowMatches(true);
       
       // Load matches after saving preferences
       await loadUserAndMatches();
+      
+      // Only show matches after loading is complete
+      setSuccess("Your preferences have been saved!");
+      setShowMatches(true);
     } catch (e: any) {
       setError(e.message || "Failed to save preferences.");
     } finally {
@@ -160,9 +196,11 @@ export default function MatchPage() {
     console.log('Saving listing:', listing);
   };
 
+
+
   return (
     <AuthGuard>
-      <main className="min-h-screen flex flex-col md:flex-row items-center justify-center bg-blue-50 overflow-auto relative w-full">
+      <main className="h-screen flex flex-col md:flex-row items-center justify-center bg-blue-50 overflow-hidden relative w-full">
         {/* Hamburger for mobile */}
         <button
           className="md:hidden fixed top-4 left-4 z-50 bg-white rounded-full shadow-lg p-3 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -179,16 +217,19 @@ export default function MatchPage() {
         {/* Sidebar: drawer on mobile, fixed on md+ */}
         <Sidebar isDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
         <aside className="hidden md:flex fixed left-0 top-0 h-screen min-w-[200px] max-w-[220px] bg-white shadow-lg rounded-tr-3xl rounded-br-3xl z-10 flex-col justify-start">
-          <Sidebar />
+        <Sidebar />
         </aside>
         
-        <div className="flex-1 flex flex-col items-center justify-center w-full md:h-screen max-w-full md:ml-[220px] px-2 sm:px-4 overflow-auto">
-          <div className="flex flex-col items-center justify-center w-full h-full transition-all duration-500">
+        <div className="flex-1 flex flex-col items-center w-full max-w-full md:ml-[220px] px-2 sm:px-4 overflow-hidden" style={{ height: '100vh' }}>
+          <div className="flex flex-col items-center w-full transition-all duration-500 pt-20 relative h-full">
             {/* Animated step/reveal flow */}
-            <div className={`transition-all duration-500 ${showMatches ? 'opacity-0 pointer-events-none translate-y-8' : 'opacity-100 translate-y-0'}`} style={{ display: showMatches ? 'none' : 'block' }}>
-              <div className="w-full md:flex md:flex-row md:gap-14 md:justify-center md:items-center md:mb-14">
-                {/* Step 1: Your Apartment (enabled if step 1, visually disabled if step 2) */}
-                <div className={`md:flex items-center justify-center w-full md:w-auto transition-all duration-300 ${step === 2 ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div className={`transition-all duration-700 ease-out ${showMatches ? 'opacity-0 pointer-events-none -translate-y-full' : 'opacity-100 translate-y-0'}`}>
+              <div className="w-full md:flex md:flex-row md:gap-14 md:justify-center md:items-center md:mb-8 relative">
+                {/* Step 1: Your Apartment */}
+                <div
+                  ref={yourApartmentRef}
+                  className={`md:flex items-center justify-center w-full md:w-auto transition-all duration-300 ${step === 2 ? 'opacity-50 pointer-events-none' : ''}`}
+                >
                   <ApartmentForm
                     title="Your Apartment"
                     data={myApartment}
@@ -196,102 +237,143 @@ export default function MatchPage() {
                     editable={step === 1}
                   />
                 </div>
-                {/* Step 2: Looking For (enabled if step 2, visually disabled if step 1) */}
-                <div className={`md:flex items-center justify-center w-full md:w-auto transition-all duration-300 ${step === 1 ? 'opacity-50 pointer-events-none' : ''}`}>
+                {/* Step 2: Looking For */}
+                <div
+                  style={yourApartmentHeight ? { minHeight: yourApartmentHeight } : {}}
+                  className={`md:flex items-center justify-center w-full md:w-auto transition-all duration-300 ${step === 1 || loading ? 'opacity-50 pointer-events-none' : ''}`}
+                >
                   <ApartmentForm
                     title="Looking For"
                     data={lookingFor}
                     onChange={setLookingFor}
-                    editable={step === 2}
+                    editable={step === 2 && !loading}
                   />
                 </div>
-                {/* Desktop: Show both forms, but only one is editable at a time */}
-                <div className="hidden md:flex items-center justify-center w-full md:w-auto">
-                  {/* Empty for layout symmetry */}
-                </div>
+
               </div>
               {/* Step button logic */}
               {step === 1 && (
-                <button
-                  className="mt-6 bg-blue-600 text-white rounded-full px-8 py-4 font-bold text-lg shadow-md transition hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed"
-                  onClick={handleNext}
-                  disabled={loading || !isMyApartmentComplete}
-                >
-                  {loading ? "Saving..." : "Next"}
-                </button>
+                <div className="flex justify-center mt-4">
+                  <button
+                    className={`bg-blue-600 text-white rounded-full px-8 py-4 font-bold text-lg shadow-md transition-all duration-700 ease-out hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed ${showMatches ? 'opacity-0 pointer-events-none -translate-y-16' : 'opacity-100 translate-y-0'}`}
+                    onClick={handleNext}
+                    disabled={loading || !isMyApartmentComplete}
+                  >
+                    {loading ? "Saving..." : "Next"}
+                  </button>
+                </div>
               )}
               {step === 2 && (
-                <button
-                  className="mt-6 bg-blue-600 text-white rounded-full px-8 py-4 font-bold text-lg shadow-md transition hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed"
-                  onClick={handleSubmit}
-                  disabled={loading || !isLookingForComplete}
-                >
-                  {loading ? "Saving..." : "Submit"}
-                </button>
+                <div className="flex flex-col items-center mt-4">
+                  <button
+                    className={`bg-blue-600 text-white rounded-full px-8 py-4 font-bold text-lg shadow-md transition-all duration-700 ease-out hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed ${showMatches ? 'opacity-0 pointer-events-none -translate-y-16' : 'opacity-100 translate-y-0'}`}
+                    onClick={handleSubmit}
+                    disabled={loading || !isLookingForComplete}
+                  >
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
+                        Finding matches...
+                      </div>
+                    ) : (
+                      "Match"
+                    )}
+                  </button>
+                  {loading && (
+                    <p className="text-gray-600 text-sm mt-2 text-center">
+                      AI is analyzing your preferences and finding the best matches...
+                    </p>
+                  )}
+                </div>
               )}
               {success && <div className="text-green-600 mt-4 text-center font-medium">{success}</div>}
               {error && <div className="text-red-600 mt-4 text-center font-medium">{error}</div>}
             </div>
             
-            {/* Matching Apartments section, animated in */}
-            <div className={`transition-all duration-500 ${showMatches ? 'opacity-100 translate-y-0' : 'opacity-0 pointer-events-none -translate-y-8'}`} style={{ display: showMatches ? 'block' : 'none' }}>
+            {/* Floating button that stays at the top */}
+            <div className="fixed top-8 z-20" style={{ left: '220px', right: '0', display: 'flex', justifyContent: 'center' }}>
               <button
-                className="mb-4 text-blue-600 font-semibold flex items-center gap-1 hover:underline focus:outline-none"
-                onClick={() => { setShowMatches(false); setStep(1); }}
+                className={`bg-blue-600 text-white rounded-full px-8 py-4 font-bold text-lg shadow-md transition-all duration-700 ease-out hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 ${showMatches ? 'opacity-100 translate-y-0' : 'opacity-0 pointer-events-none -translate-y-16'}`}
+                onClick={() => { 
+                  setShowMatches(false); 
+                  setStep(1); 
+                  // Reset success/error messages when going back
+                  setSuccess("");
+                  setError("");
+                }}
               >
-                <span className="inline-block transform rotate-180">⬆️</span> Edit apartment infos
+                Edit Apartment Info
               </button>
-              
-              {/* AI-Powered Matches */}
-              <div className="w-full max-w-6xl mx-auto">
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    AI-Powered Matches
-                  </h2>
-                  <p className="text-gray-600">
-                    Our AI analyzes your preferences and listing descriptions to find the best matches
+            </div>
+            
+
+            
+          </div>
+        </div>
+        
+        {/* Matching Apartments section, animated in - moved outside main container */}
+        <div className={`transition-all duration-700 ease-out listings-scrollbar ${showMatches ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`} style={{ 
+          position: 'fixed', 
+          top: '8rem', 
+          left: '220px', // Start after sidebar
+          right: '0', // Extend to right edge
+          width: 'calc(100% - 220px)', 
+          maxWidth: '1200px',
+          height: 'calc(100vh - 12rem)', 
+          overflowY: 'auto', 
+          visibility: showMatches ? 'visible' : 'hidden',
+          zIndex: 15,
+          margin: '0 auto' // Center within the available space
+        }}>
+          
+          {/* AI-Powered Matches */}
+          <div className="w-full max-w-6xl mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                AI-Powered Matches
+              </h2>
+              <p className="text-gray-600">
+                Our AI analyzes your preferences and listing descriptions to find the best matches
+              </p>
+            </div>
+            
+            {loadingMatches ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p className="mt-4 text-gray-600">Finding your perfect matches...</p>
+              </div>
+            ) : matches.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {matches.map((match) => (
+                  <MatchCard
+                    key={match.listing.id || match.listing.link}
+                    match={match}
+                    onContact={handleContact}
+                    onSave={handleSave}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="bg-white rounded-3xl shadow-lg border border-gray-200 p-8">
+                  <h3 className="text-gray-900 font-bold text-lg mb-4">
+                    No matches found yet
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    We're analyzing available listings to find your perfect match.
                   </p>
-                </div>
-                
-                {loadingMatches ? (
-                  <div className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <p className="mt-4 text-gray-600">Finding your perfect matches...</p>
-                  </div>
-                ) : matches.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {matches.map((match) => (
-                      <MatchCard
-                        key={match.listing.id}
-                        match={match}
-                        onContact={handleContact}
-                        onSave={handleSave}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="bg-white rounded-3xl shadow-lg border border-gray-200 p-8">
-                      <h3 className="text-gray-900 font-bold text-lg mb-4">
-                        No matches found yet
-                      </h3>
-                      <p className="text-gray-600 mb-4">
-                        We're analyzing available listings to find your perfect match.
-                      </p>
-                      <button
+                                        <button
                         onClick={loadUserAndMatches}
                         className="btn btn-primary"
                       >
                         Refresh Matches
                       </button>
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
-      </main>
+    </main>
     </AuthGuard>
   );
 } 

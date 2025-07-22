@@ -35,6 +35,7 @@ export interface User {
 export interface Apartment {}
 export interface Match {} 
 export interface Listing {
+  id?: string; // Firestore doc id or unique identifier
   link: string;
   district: string;
   type: string;
@@ -51,7 +52,9 @@ export interface Listing {
   heating?: string;
   flooring?: string;
   wbsRequired?: boolean;
-  description?: string;
+  description?: string; // what is being offered
+  offeredDescription?: string; // explicit: what is being offered (can be same as description)
+  lookingForDescription?: string; // what the listing author is looking for in a swap
   images?: string[];
   contactName?: string;
   dateListed?: string;

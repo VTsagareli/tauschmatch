@@ -5,14 +5,12 @@
 //    FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxx@your-project.iam.gserviceaccount.com
 // 2. Run this script with: npm run run:script --name=importListingsToFirestore
 
-import admin from "firebase-admin";
+// Convert to CommonJS
+const admin = require("firebase-admin");
+const fs = require("fs");
 
-// Use environment variables for Firebase Admin SDK
-const serviceAccount = {
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-};
+// Use serviceAccountKey.json for Firebase Admin SDK
+const serviceAccount = JSON.parse(require('fs').readFileSync('serviceAccountKey.json', 'utf-8'));
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -24,18 +22,18 @@ const db = admin.firestore();
 
 const REQUIRED_FIELDS = ["link", "coldRent", "rooms", "squareMeters", "title", "district", "type"];
 
-function hasRequiredFields(listing: any) {
+function hasRequiredFields(listing) {
   return REQUIRED_FIELDS.every(field => listing[field] !== undefined && listing[field] !== null && listing[field] !== "");
 }
 
-function sanitize(obj: any): any {
+function sanitize(obj) {
   if (Array.isArray(obj)) {
     const arr = obj.map(sanitize).filter(
       (v) => v !== undefined && v !== null && !(typeof v === "number" && isNaN(v)) && v !== Infinity && v !== -Infinity
     );
     return arr.length > 0 ? arr : undefined;
   } else if (typeof obj === "object" && obj !== null) {
-    const clean: any = {};
+    const clean = {};
     for (const [key, value] of Object.entries(obj)) {
       const v = sanitize(value);
       if (
@@ -69,9 +67,25 @@ async function importListings() {
     const sanitized = sanitize(listing);
     console.log("Attempting to import:", JSON.stringify(sanitized, null, 2));
     try {
-      await db.collection("listings").add(sanitized);
-      success++;
-      console.log(`Imported: ${sanitized.link}`);
+      // Check if a listing with the same link already exists
+      const existing = await db.collection("listings").where("link", "==", sanitized.link).get();
+      if (!existing.empty) {
+        // If the new listing has an image and the old one does not, update it
+        const doc = existing.docs[0];
+        const oldData = doc.data();
+        const newHasImage = sanitized.images && sanitized.images.length > 0 && sanitized.images[0];
+        const oldHasImage = oldData.images && oldData.images.length > 0 && oldData.images[0];
+        if (newHasImage && !oldHasImage) {
+          await doc.ref.update(sanitized);
+          console.log(`Updated existing listing with image: ${sanitized.link}`);
+        } else {
+          console.log(`Listing already exists, skipping: ${sanitized.link}`);
+        }
+      } else {
+        await db.collection("listings").add(sanitized);
+        success++;
+        console.log(`Imported: ${sanitized.link}`);
+      }
     } catch (e) {
       failed++;
       console.error("Failed to import the above listing.");

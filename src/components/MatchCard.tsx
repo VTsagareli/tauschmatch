@@ -16,20 +16,6 @@ export default function MatchCard({ match, onContact, onSave }: MatchCardProps) 
   const [aiAnalysis, setAiAnalysis] = useState<ListingAnalysis | null>(null);
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    if (score >= 40) return 'text-orange-600';
-    return 'text-red-600';
-  };
-
-  const getScoreLabel = (score: number) => {
-    if (score >= 80) return 'Excellent Match';
-    if (score >= 60) return 'Good Match';
-    if (score >= 40) return 'Fair Match';
-    return 'Poor Match';
-  };
-
   const loadAiAnalysis = async () => {
     if (aiAnalysis) return;
     
@@ -53,87 +39,82 @@ export default function MatchCard({ match, onContact, onSave }: MatchCardProps) 
   };
 
   return (
-    <article className="card bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <article className="card bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-2xl">
+      {/* Listing image */}
+      {match.listing.images && match.listing.images.length > 0 ? (
+        <img
+          src={match.listing.images[0]}
+          alt={match.listing.title || 'Listing image'}
+          className="w-full h-48 object-cover rounded-t-2xl"
+        />
+      ) : (
+        <div className="w-full h-48 bg-gray-200 flex items-center justify-center rounded-t-2xl text-gray-400 text-lg">
+          No image available
+        </div>
+      )}
       <div className="card-body">
         {/* Header with scores */}
         <div className="flex justify-between items-start mb-4">
           <div>
             <h3 className="card-title text-lg font-semibold mb-2">
-              {match.listing.title}
+              {match.listing.type} in {match.listing.district}
             </h3>
             <p className="text-gray-600 text-sm">
-              {match.listing.district} • {match.listing.type}
+              {match.listing.address || `${match.listing.district} • ${match.listing.type}`}
             </p>
           </div>
           
           <div className="text-right">
-            <div className={`text-2xl font-bold ${getScoreColor(match.score)}`}>
-              {match.score}%
-            </div>
-            <div className="text-xs text-gray-500">
-              {getScoreLabel(match.score)}
+            <div className="text-2xl font-bold text-blue-700">
+              {match.score}/10
             </div>
           </div>
         </div>
 
-        {/* Key details */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <div className="text-lg font-semibold text-blue-600">
-              €{match.listing.coldRent}
-            </div>
-            <div className="text-xs text-gray-500">Cold Rent</div>
+        {/* Why this matches (combined) */}
+        {match.whyThisMatches && match.whyThisMatches.length > 0 && (
+          <div className="text-xs text-blue-700 space-y-1 mb-2">
+            <div className="font-semibold mb-1">Why this matches</div>
+            {match.whyThisMatches.map((reason, idx) => (
+              <p key={idx}>- {reason}</p>
+            ))}
           </div>
-          
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <div className="text-lg font-semibold text-green-600">
-              {match.listing.rooms}
-            </div>
-            <div className="text-xs text-gray-500">Rooms</div>
-          </div>
-          
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <div className="text-lg font-semibold text-purple-600">
-              {match.listing.squareMeters}m²
-            </div>
-            <div className="text-xs text-gray-500">Size</div>
-          </div>
-          
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <div className="text-lg font-semibold text-orange-600">
-              {match.traditionalScore}%
-            </div>
-            <div className="text-xs text-gray-500">Traditional</div>
-          </div>
-        </div>
+        )}
 
-        {/* Match reasons */}
-        <div className="mb-4">
-          <h4 className="font-semibold text-sm text-gray-700 mb-2">Why this matches:</h4>
-          <ul className="space-y-1">
-            {match.matchReasons.slice(0, 3).map((reason, index) => (
-              <li key={index} className="text-sm text-gray-600 flex items-center">
-                <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                {reason}
-              </li>
+        {/* Filter criteria as bullet points */}
+        {match.filters && (
+          <ul className="list-disc list-inside text-xs text-gray-600 mb-2">
+            {Object.entries(match.filters).map(([key, value]) => (
+              value ? <li key={key}><span className="font-medium">{key}:</span> {Array.isArray(value) ? value.join(', ') : value}</li> : null
             ))}
           </ul>
-        </div>
+        )}
 
-        {/* AI Score indicator */}
-        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-semibold text-blue-800">AI Semantic Score</div>
-              <div className="text-xs text-blue-600">
-                Analyzed your preferences vs listing description
+        {/* GPT-based explanation: what you want & they have, what you have & they want */}
+        {(match.whatYouWantAndTheyHave?.length > 0 || match.whatYouHaveAndTheyWant?.length > 0) && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-2 text-xs text-blue-900 space-y-2">
+            {match.whatYouWantAndTheyHave?.length > 0 && (
+              <div>
+                <div className="font-semibold mb-1">What you want & they have</div>
+                <ul className="list-disc list-inside">
+                  {match.whatYouWantAndTheyHave.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
               </div>
-            </div>
-            <div className={`text-lg font-bold ${getScoreColor(match.semanticScore)}`}>
-              {match.semanticScore}%
-            </div>
+            )}
+            {match.whatYouHaveAndTheyWant?.length > 0 && (
+              <div>
+                <div className="font-semibold mb-1">What you have & they want</div>
+                <ul className="list-disc list-inside">
+                  {match.whatYouHaveAndTheyWant.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         {/* Action buttons */}
         <div className="flex gap-2 mb-4">

@@ -15,12 +15,15 @@
     "run:script": "tsx src/scripts/$npm_config_name.ts"
   },
   "dependencies": {
+    "dotenv": "^17.2.0",
     "firebase": "^11.10.0",
     "firebase-admin": "^13.4.0",
     "next": "15.3.5",
     "openai": "^5.8.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-icons": "^5.5.0",
+    "react-select": "^5.10.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

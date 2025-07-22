@@ -66,7 +66,7 @@ export default function Sidebar({ isDrawer = false, open = false, onClose }: Sid
 
   // Fixed sidebar for desktop
   return (
-    <aside className="bg-white rounded-3xl shadow-lg p-8 w-full flex flex-col items-center gap-8">
+    <div className="w-full flex flex-col items-center gap-8 p-8">
       <nav className="w-full">
         <ul className="list-none p-0 m-0 w-full flex flex-col gap-5">
           <li>
@@ -87,6 +87,6 @@ export default function Sidebar({ isDrawer = false, open = false, onClose }: Sid
           </li>
         </ul>
       </nav>
-    </aside>
+    </div>
   );
 } 

@@ -6,10 +6,8 @@ import { aiService, ExtractedPreferences, ListingAnalysis } from './aiService';
 
 export interface MatchResult {
   listing: Listing;
-  score: number;
-  semanticScore: number;
-  traditionalScore: number;
-  matchReasons: string[];
+  score: number; // single combined score (1-10)
+  whyThisMatches: string[];
   aiAnalysis?: ListingAnalysis;
 }
 
@@ -22,77 +20,149 @@ export interface MatchFilters {
 }
 
 export const matchService = {
+  // This function is called from the client-side
   async findMatches(
     user: User, 
     filters: MatchFilters = {}, 
     limitResults: number = 20
   ): Promise<MatchResult[]> {
     try {
-      console.log('Finding matches for user:', user.uid);
-      console.log('User lookingFor preferences:', user.lookingFor);
+      const response = await fetch('/api/find-matches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, filters, limit: limitResults }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch matches from API.');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error calling find-matches API:", error);
+      return [];
+    }
+  },
+
+  // This function is now for server-side use ONLY
+  async findMatchesOnServer(
+    user: User, 
+    filters: MatchFilters = {}, 
+    limitResults: number = 20
+  ): Promise<MatchResult[]> {
+    try {
+      console.log('🔍 Starting match search...');
+      console.log('User data:', user);
+      console.log('Filters:', filters);
+      console.log('Limit:', limitResults);
+      
       // Build Firestore query
       let q = query(collection(db, 'listings'));
       
       // Apply filters
       if (filters.maxRent) {
         q = query(q, where('coldRent', '<=', filters.maxRent));
+        console.log('Applied maxRent filter:', filters.maxRent);
       }
       if (filters.minRooms) {
         q = query(q, where('rooms', '>=', filters.minRooms));
+        console.log('Applied minRooms filter:', filters.minRooms);
       }
       if (filters.maxRooms) {
         q = query(q, where('rooms', '<=', filters.maxRooms));
+        console.log('Applied maxRooms filter:', filters.maxRooms);
       }
       if (filters.districts && filters.districts.length > 0) {
         q = query(q, where('district', 'in', filters.districts));
+        console.log('Applied districts filter:', filters.districts);
       }
       if (filters.types && filters.types.length > 0) {
         q = query(q, where('type', 'in', filters.types));
+        console.log('Applied types filter:', filters.types);
       }
       
       // Limit results (no ordering by createdAt since imported listings don't have it)
       q = query(q, limit(limitResults));
       
-      console.log('Firestore query filters:', filters);
-      console.log('Query limit:', limitResults);
-      
+      console.log('Executing Firestore query...');
       const querySnapshot = await getDocs(q);
+      console.log('Query completed. Found documents:', querySnapshot.size);
+      
       const listings: Listing[] = [];
       
       querySnapshot.forEach((doc) => {
-        listings.push({ id: doc.id, ...doc.data() } as Listing);
+        const data = doc.data();
+        console.log('Document data:', { id: doc.id, district: data.district, coldRent: data.coldRent, rooms: data.rooms });
+        listings.push({ id: doc.id, ...data } as Listing);
       });
       
-      console.log(`Found ${listings.length} listings from Firestore`);
+      console.log('Total listings processed:', listings.length);
+      
       if (listings.length === 0) {
-        console.log('No listings found - this might be the issue');
+        console.log('❌ No listings found in Firestore');
         return [];
       }
       
-      // Extract user preferences using AI
-      // Create a description from user's lookingFor preferences
-      const userDescription = this.createUserDescription(user);
-      const userPrefs = await aiService.extractPreferences(userDescription);
+      // Try AI-powered matching first, fallback to traditional only
+      let userPrefs;
+      let useAIScoring = true;
       
-      // Calculate match scores for each listing
+      try {
+        const userDescription = this.createUserDescription(user);
+        userPrefs = await aiService.extractPreferences(userDescription);
+        console.log('✅ AI preferences extracted successfully');
+      } catch (error) {
+        console.log('⚠️ AI service failed, using traditional scoring only');
+        useAIScoring = false;
+        userPrefs = this.createFallbackPreferences(user);
+        console.log('✅ Fallback preferences created:', userPrefs);
+      }
+      
+      // Calculate match scores for each listing (BATCHED)
+      let batchResults: Array<{ id: string; score: number; whatYouWantAndTheyHave: string[]; whatYouHaveAndTheyWant: string[] }> = [];
+      if (useAIScoring && listings.length > 0) {
+        try {
+          batchResults = await aiService.batchCalculateCombinedScoreAndReasons(
+            user.lookingForDescription || '',
+            user.offeredDescription || user.description || '',
+            listings.map(listing => ({
+              id: listing.id,
+              offeredDescription: listing.offeredDescription || listing.description || '',
+              lookingForDescription: listing.lookingForDescription || ''
+            }))
+          );
+        } catch (error) {
+          console.log('Batch AI scoring failed, using minimum scores');
+          batchResults = listings.map(listing => ({ id: listing.id, score: 1, whatYouWantAndTheyHave: [], whatYouHaveAndTheyWant: [] }));
+        }
+      }
+
+      // Assign results to each listing
       const matchResults: MatchResult[] = [];
-      
       for (const listing of listings) {
-        const traditionalScore = this.calculateTraditionalScore(user, listing);
-        const semanticScore = await this.calculateSemanticScore(userPrefs, listing);
-        const totalScore = (traditionalScore * 0.6) + (semanticScore * 0.4);
-        
+        let score = 1;
+        let whatYouWantAndTheyHave: string[] = [];
+        let whatYouHaveAndTheyWant: string[] = [];
         const matchReasons = this.generateMatchReasons(user, listing, userPrefs);
-        
+        if (useAIScoring) {
+          const result = batchResults.find(r => r.id === listing.id);
+          if (result) {
+            score = result.score;
+            whatYouWantAndTheyHave = result.whatYouWantAndTheyHave;
+            whatYouHaveAndTheyWant = result.whatYouHaveAndTheyWant;
+          }
+        }
+        // Always include traditional match reasons
+        const whyThisMatches = [...matchReasons];
         matchResults.push({
           listing,
-          score: Math.round(totalScore),
-          semanticScore: Math.round(semanticScore),
-          traditionalScore: Math.round(traditionalScore),
-          matchReasons,
+          score,
+          whyThisMatches,
+          whatYouWantAndTheyHave,
+          whatYouHaveAndTheyWant,
         });
       }
       
+      console.log('✅ Scoring completed. Returning', matchResults.length, 'matches');
       // Sort by total score (highest first)
       return matchResults.sort((a, b) => b.score - a.score);
       
@@ -145,15 +215,15 @@ export const matchService = {
     return Math.min(score, 100);
   },
 
-  async calculateSemanticScore(userPrefs: ExtractedPreferences, listing: Listing): Promise<number> {
-    if (!listing.description) return 0;
+  async calculateSemanticScore(userPrefs: ExtractedPreferences, listing: Listing, userOfferedDescription: string, listingLookingForDescription: string): Promise<{ score: number; reasons: { forYou: string[]; forThem: string[] } }> {
+    if (!listing.description) return { score: 0, reasons: { forYou: [], forThem: [] } };
     
     try {
       const listingAnalysis = await aiService.analyzeListingDescription(listing.description);
-      return await aiService.calculateSemanticMatchScore(userPrefs, listingAnalysis);
+      return await aiService.calculateSemanticMatchScore(userPrefs, listingAnalysis, userOfferedDescription, listingLookingForDescription);
     } catch (error) {
       console.error('Error calculating semantic score:', error);
-      return 0;
+      return { score: 0, reasons: { forYou: [], forThem: [] } };
     }
   },
 
@@ -254,5 +324,79 @@ export const matchService = {
     }
     
     return parts.join(', ') + '.';
+  },
+
+  createFallbackPreferences(user: User): ExtractedPreferences {
+    const lookingFor = user.lookingFor;
+    if (!lookingFor) {
+      return {
+        quiet: false,
+        nearParks: false,
+        familyFriendly: false,
+        petFriendly: false,
+        nearPublicTransport: false,
+        nearShopping: false,
+        nearRestaurants: false,
+        budget: null,
+        minRooms: null,
+        maxRent: null,
+        preferredDistricts: [],
+        lifestyle: [],
+      };
+    }
+
+    // Extract preferences from user's lookingFor data
+    const preferences: ExtractedPreferences = {
+      quiet: false,
+      nearParks: false,
+      familyFriendly: false,
+      petFriendly: lookingFor.petsAllowed || false,
+      nearPublicTransport: false,
+      nearShopping: false,
+      nearRestaurants: false,
+      budget: lookingFor.maxColdRent ? parseInt(lookingFor.maxColdRent) : null,
+      minRooms: lookingFor.minRooms ? parseInt(lookingFor.minRooms) : null,
+      maxRent: lookingFor.maxColdRent ? parseInt(lookingFor.maxColdRent) : null,
+      preferredDistricts: lookingFor.districts || [],
+      lifestyle: [],
+    };
+
+    // Infer lifestyle based on preferences
+    if (lookingFor.minRooms && parseInt(lookingFor.minRooms) >= 3) {
+      preferences.lifestyle.push('family');
+      preferences.familyFriendly = true;
+    } else if (lookingFor.minRooms && parseInt(lookingFor.minRooms) <= 1) {
+      preferences.lifestyle.push('student');
+    } else {
+      preferences.lifestyle.push('professional');
+    }
+
+    // Infer transport preference if not specified
+    preferences.nearPublicTransport = true; // Most people want this
+
+    return preferences;
+  },
+
+  async calculateCombinedScore(userPrefs: ExtractedPreferences, listing: Listing, userOfferedDescription: string, listingLookingForDescription: string): Promise<number> {
+    if (!listing.description) return 1;
+    try {
+      const listingAnalysis = await aiService.analyzeListingDescription(listing.description);
+      return await aiService.calculateCombinedMatchScore(userPrefs, listingAnalysis, userOfferedDescription, listingLookingForDescription);
+    } catch (error) {
+      console.error('Error calculating combined score:', error);
+      return 1;
+    }
+  },
+
+  // Add a helper to get the combined score and semantic reasons from AI
+  async getCombinedScoreAndReasons(userPrefs: ExtractedPreferences, listing: Listing, userLookingForDescription: string, listingLookingForDescription: string, listingOfferedDescription: string, userOfferedDescription: string): Promise<{ score: number; whatYouWantAndTheyHave: string[]; whatYouHaveAndTheyWant: string[] }> {
+    if (!listing.description) return { score: 1, whatYouWantAndTheyHave: [], whatYouHaveAndTheyWant: [] };
+    try {
+      const listingAnalysis = await aiService.analyzeListingDescription(listing.description);
+      return await aiService.calculateCombinedScoreAndReasons(userPrefs, listingAnalysis, userLookingForDescription, listingLookingForDescription, listingOfferedDescription, userOfferedDescription);
+    } catch (error) {
+      console.error('Error getting combined score and reasons:', error);
+      return { score: 1, whatYouWantAndTheyHave: [], whatYouHaveAndTheyWant: [] };
+    }
   }
 }; 

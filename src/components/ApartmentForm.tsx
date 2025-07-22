@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import GooglePlacesAutocomplete from "./GooglePlacesAutocomplete";
+import Select from 'react-select';
 
 export type ApartmentFormData = {
   // For 'Your Apartment'
@@ -21,6 +22,8 @@ export type ApartmentFormData = {
   floor?: string;
   balcony?: boolean;
   petsAllowed?: boolean;
+  myApartmentDescription?: string;
+  lookingForDescription?: string;
 };
 
 type Props = {
@@ -53,7 +56,7 @@ function getErrorMessages(data: ApartmentFormData, isLookingFor: boolean) {
       }
     } else {
       if (["rooms", "squareMeters", "coldRent", "type"].includes(field) && (!data[field] || (typeof data[field] === "string" && data[field].trim() === ""))) {
-        errors[field] = "Please fill out this field.";
+      errors[field] = "Please fill out this field.";
       }
     }
   });
@@ -170,8 +173,46 @@ export default function ApartmentForm({ title, data, onChange, onNext, showNext,
     });
   };
 
+  // Autofill example data
+  function handleAutofill() {
+    if (isLookingFor) {
+      onChange({
+        type: "Apartment",
+        minRooms: "2",
+        minSquareMeters: "45",
+        maxColdRent: "800",
+        districts: ["Friedrichshain-Kreuzberg", "Mitte", "Charlottenburg-Wilmersdorf", "Neukölln"],
+        lookingForDescription: "I am looking for a cozy, modern 1-2 room apartment in a lively area such as Kreuzberg, Neukölln, or Friedrichshain. Ideally, the apartment has a balcony or terrace, is pet-friendly, and is close to cafés, restaurants, and public transport. I would love to live in a place with a young, social atmosphere where music and gatherings are welcome. Affordability and a vibrant neighborhood are important to me, as well as a space that feels welcoming and inspiring.",
+      });
+    } else {
+      onChange({
+        type: "Apartment",
+        street: "Stralauer Allee",
+        number: "22A",
+        zipcode: "10245",
+        city: "Berlin",
+        rooms: "3",
+        squareMeters: "50",
+        coldRent: "1100",
+        floor: "0",
+        balcony: true,
+        petsAllowed: true,
+        myApartmentDescription: "I currently live in a spacious, bright 3-room apartment in a quiet, family-friendly neighborhood in Berlin. The apartment features large windows, a modern kitchen, and a sunny balcony overlooking a green courtyard. It’s perfect for relaxing or working from home, and the area is peaceful with friendly neighbors, parks, and easy access to public transport. The rent is reasonable for the size, but as a single person, I find it a bit too large for my needs.",
+      });
+    }
+  }
+
   return (
-    <section className={`flex flex-col items-center gap-3 bg-white rounded-3xl shadow-lg p-6 sm:p-3 w-full max-w-[370px] min-h-[460px] justify-center mx-auto relative transition-all duration-500 ${animate ? 'animate-fadeInUp' : 'opacity-0 translate-y-8'}`}>
+    <section className={`flex flex-col items-center gap-3 bg-white rounded-3xl shadow-lg p-4 sm:p-2 w-full max-w-[600px] min-h-[220px] justify-center mx-auto relative transition-all duration-500 ${animate ? 'animate-fadeInUp' : 'opacity-0 translate-y-8'}`}>
+      {/* Autofill Example Button */}
+      <button
+        type="button"
+        className="absolute top-2 right-2 bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs font-semibold px-3 py-1 rounded shadow-sm border border-blue-200"
+        onClick={handleAutofill}
+        tabIndex={0}
+      >
+        Autofill Example
+      </button>
       <style>{`
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(32px); }
@@ -237,28 +278,38 @@ export default function ApartmentForm({ title, data, onChange, onNext, showNext,
         {/* District/Street/Number for 'Looking For' */}
         {isLookingFor && (
           <div className="w-full flex flex-col gap-2 mb-2">
-            <label className="font-medium text-gray-700">
-              Districts{requiredAsterisk} {infoIcon}
-              <div className="mt-2 p-3 border border-blue-400 rounded-xl bg-white max-h-32 overflow-y-auto">
-                <div className="text-sm text-gray-600 mb-2">Select one or more districts:</div>
-                <div className="grid grid-cols-1 gap-2">
-                  {berlinDistricts.map(district => (
-                    <label key={district} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={(data.districts || []).includes(district)}
-                        onChange={() => handleDistrictToggle(district)}
-                        disabled={!editable}
-                        className="accent-blue-600 w-4 h-4 rounded"
-                      />
-                      <span className="text-sm text-gray-700">{district}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              {errors.districts && touched.districts && (
-                <div className="text-red-500 text-sm flex items-center gap-1 mt-1">&#9888; {errors.districts}</div>
-              )}
+            <label className="font-medium text-gray-700 w-full">
+              Districts<span className="text-blue-600 ml-1">*</span>
+              <Select
+                isMulti
+                closeMenuOnSelect={false}
+                name="districts"
+                options={[
+                  { value: "Mitte", label: "Mitte" },
+                  { value: "Friedrichshain-Kreuzberg", label: "Friedrichshain-Kreuzberg" },
+                  { value: "Pankow", label: "Pankow" },
+                  { value: "Charlottenburg-Wilmersdorf", label: "Charlottenburg-Wilmersdorf" },
+                  { value: "Spandau", label: "Spandau" },
+                  { value: "Steglitz-Zehlendorf", label: "Steglitz-Zehlendorf" },
+                  { value: "Tempelhof-Schöneberg", label: "Tempelhof-Schöneberg" },
+                  { value: "Neukölln", label: "Neukölln" },
+                  { value: "Treptow-Köpenick", label: "Treptow-Köpenick" },
+                  { value: "Marzahn-Hellersdorf", label: "Marzahn-Hellersdorf" },
+                  { value: "Lichtenberg", label: "Lichtenberg" },
+                  { value: "Reinickendorf", label: "Reinickendorf" },
+                ]}
+                value={(data.districts || []).map(d => ({ value: d, label: d }))}
+                onChange={selected => {
+                  onChange({ ...data, districts: selected ? selected.map(opt => opt.value) : [] });
+                }}
+                classNamePrefix="react-select"
+                isDisabled={!editable}
+                placeholder="Select one or more districts..."
+                styles={{
+                  menu: base => ({ ...base, zIndex: 9999 }),
+                  control: base => ({ ...base, minHeight: 44 }),
+                }}
+              />
             </label>
             <label className="font-medium text-gray-700">
               Street (optional)
@@ -284,126 +335,98 @@ export default function ApartmentForm({ title, data, onChange, onNext, showNext,
                 disabled={!editable}
               />
             </label>
-            <div className="apartment-form-row flex gap-4 w-full flex-col sm:flex-row">
-              <label className="flex-1 mb-2 font-medium text-gray-700">
-                Min. Rooms{requiredAsterisk}
-                <input
-                  name="minRooms"
-                  type="number"
-                  min="1"
-                  value={data.minRooms || ""}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  className={`mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border ${errors.minRooms && touched.minRooms ? 'border-red-500 bg-red-50' : 'border-blue-400'} mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none`}
-                  required
-                  disabled={!editable}
-                />
-                {errors.minRooms && touched.minRooms && (
-                  <div className="text-red-500 text-sm flex items-center gap-1 mt-1">&#9888; {errors.minRooms}</div>
-                )}
-              </label>
-              <label className="flex-1 mb-2 font-medium text-gray-700">
-                Min. Square Meters{requiredAsterisk}
-                <input
-                  name="minSquareMeters"
-                  type="number"
-                  min="1"
-                  value={data.minSquareMeters || ""}
-            onChange={handleChange}
-            onBlur={handleBlur}
-                  className={`mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border ${errors.minSquareMeters && touched.minSquareMeters ? 'border-red-500 bg-red-50' : 'border-blue-400'} mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none`}
-            required
-                  disabled={!editable}
-                />
-                {errors.minSquareMeters && touched.minSquareMeters && (
-                  <div className="text-red-500 text-sm flex items-center gap-1 mt-1">&#9888; {errors.minSquareMeters}</div>
-          )}
-        </label>
-              <label className="flex-1 mb-2 font-medium text-gray-700">
-                Max. Cold Rent (€){requiredAsterisk}
-          <input
-                  name="maxColdRent"
-                  type="number"
-                  min="0"
-                  value={data.maxColdRent || ""}
-            onChange={handleChange}
-            onBlur={handleBlur}
-                  className={`mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border ${errors.maxColdRent && touched.maxColdRent ? 'border-red-500 bg-red-50' : 'border-blue-400'} mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none`}
-            required
-                  disabled={!editable}
-          />
-                {errors.maxColdRent && touched.maxColdRent && (
-                  <div className="text-red-500 text-sm flex items-center gap-1 mt-1">&#9888; {errors.maxColdRent}</div>
-          )}
-        </label>
-            </div>
           </div>
         )}
-        {/* For 'Your Apartment' */}
+        {/* Numeric fields row */}
         {!isLookingFor && (
-          <div className="apartment-form-row flex gap-4 w-full flex-col sm:flex-row">
-            <label className="flex-1 mb-2 font-medium text-gray-700">
-          Rooms{requiredAsterisk}
-          <input
-            name="rooms"
-            type="number"
-            min="1"
+          <div className="flex gap-4 w-full mb-2">
+            <label className="flex-1 font-medium text-gray-700">
+              Rooms
+              <input
+                name="rooms"
+                type="number"
                 value={data.rooms || ""}
-            onChange={handleChange}
-            onBlur={handleBlur}
-                className={`mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border ${errors.rooms && touched.rooms ? 'border-red-500 bg-red-50' : 'border-blue-400'} mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none`}
-            required
+                onChange={e => onChange({ ...data, rooms: e.target.value })}
+                className="mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border border-blue-400 mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none"
+                required
                 disabled={!editable}
-          />
-          {errors.rooms && touched.rooms && (
-                <div className="text-red-500 text-sm flex items-center gap-1 mt-1">&#9888; {errors.rooms}</div>
-          )}
-        </label>
-            <label className="flex-1 mb-2 font-medium text-gray-700">
-          Square Meters{requiredAsterisk}
-          <input
-            name="squareMeters"
-            type="number"
-            min="1"
+              />
+            </label>
+            <label className="flex-1 font-medium text-gray-700">
+              Square Meters
+              <input
+                name="squareMeters"
+                type="number"
                 value={data.squareMeters || ""}
-            onChange={handleChange}
-            onBlur={handleBlur}
-                className={`mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border ${errors.squareMeters && touched.squareMeters ? 'border-red-500 bg-red-50' : 'border-blue-400'} mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none`}
-            required
+                onChange={e => onChange({ ...data, squareMeters: e.target.value })}
+                className="mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border border-blue-400 mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none"
+                required
                 disabled={!editable}
-          />
-          {errors.squareMeters && touched.squareMeters && (
-                <div className="text-red-500 text-sm flex items-center gap-1 mt-1">&#9888; {errors.squareMeters}</div>
-          )}
-        </label>
-            <label className="flex-1 mb-2 font-medium text-gray-700">
-          Cold Rent (€){requiredAsterisk}
-          <input
-            name="coldRent"
-            type="number"
-            min="0"
+              />
+            </label>
+            <label className="flex-1 font-medium text-gray-700">
+              Cold Rent (€)
+              <input
+                name="coldRent"
+                type="number"
                 value={data.coldRent || ""}
-            onChange={handleChange}
-            onBlur={handleBlur}
-                className={`mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border ${errors.coldRent && touched.coldRent ? 'border-red-500 bg-red-50' : 'border-blue-400'} mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none`}
-            required
+                onChange={e => onChange({ ...data, coldRent: e.target.value })}
+                className="mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border border-blue-400 mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none"
+                required
                 disabled={!editable}
-          />
-          {errors.coldRent && touched.coldRent && (
-                <div className="text-red-500 text-sm flex items-center gap-1 mt-1">&#9888; {errors.coldRent}</div>
-              )}
+              />
             </label>
           </div>
         )}
-        <div className="apartment-form-row flex gap-4 w-full flex-col sm:flex-row">
-          <label className="flex-1 mb-2 font-medium text-gray-700">
-            Apartment Type{requiredAsterisk}
+        {isLookingFor && (
+          <div className="flex gap-4 w-full mb-2">
+            <label className="flex-1 font-medium text-gray-700">
+              Min Rooms
+              <input
+                name="minRooms"
+                type="number"
+                value={data.minRooms || ""}
+                onChange={e => onChange({ ...data, minRooms: e.target.value })}
+                className="mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border border-blue-400 mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none"
+                required
+                disabled={!editable}
+              />
+            </label>
+            <label className="flex-1 font-medium text-gray-700">
+              Min Square Meters
+              <input
+                name="minSquareMeters"
+                type="number"
+                value={data.minSquareMeters || ""}
+                onChange={e => onChange({ ...data, minSquareMeters: e.target.value })}
+                className="mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border border-blue-400 mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none"
+                required
+                disabled={!editable}
+              />
+            </label>
+            <label className="flex-1 font-medium text-gray-700">
+              Max Cold Rent (€)
+              <input
+                name="maxColdRent"
+                type="number"
+                value={data.maxColdRent || ""}
+                onChange={e => onChange({ ...data, maxColdRent: e.target.value })}
+                className="mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border border-blue-400 mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none"
+                required
+                disabled={!editable}
+              />
+            </label>
+          </div>
+        )}
+        {/* Type, Floor, Balcony, Pets row */}
+        <div className="flex gap-4 w-full mb-2">
+          <label className="flex-1 font-medium text-gray-700">
+            Apartment Type
             <select
               name="type"
               value={data.type}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border ${errors.type && touched.type ? 'border-red-500 bg-red-50' : 'border-blue-400'} mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none`}
+              onChange={e => onChange({ ...data, type: e.target.value as any })}
+              className="mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border border-blue-400 mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none"
               required
               disabled={!editable}
             >
@@ -411,18 +434,15 @@ export default function ApartmentForm({ title, data, onChange, onNext, showNext,
               <option value="WG Room">WG Room</option>
               <option value="Full House">Full House</option>
             </select>
-            {errors.type && touched.type && (
-              <div className="text-red-500 text-sm flex items-center gap-1 mt-1">&#9888; {errors.type}</div>
-          )}
-        </label>
-          <label className="flex-1 mb-2 font-medium text-gray-700">
+          </label>
+          <label className="flex-1 font-medium text-gray-700">
             Floor
             <select
               name="floor"
               value={data.floor || "any"}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border ${errors.floor && touched.floor ? 'border-red-500 bg-red-50' : 'border-blue-400'} mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none`}
+              onChange={e => onChange({ ...data, floor: e.target.value })}
+              className="mt-2 h-9 px-4 rounded-xl text-base sm:text-sm w-full bg-white text-gray-900 border border-blue-400 mb-1 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none"
+              required
               disabled={!editable}
             >
               <option value="any">Any Floor</option>
@@ -438,21 +458,66 @@ export default function ApartmentForm({ title, data, onChange, onNext, showNext,
               <option value="9">9th Floor</option>
               <option value="10">10th Floor</option>
             </select>
-            {errors.floor && touched.floor && (
-              <div className="text-red-500 text-sm flex items-center gap-1 mt-1">&#9888; {errors.floor}</div>
-            )}
+          </label>
+          <label className="flex-1 font-medium text-gray-700 flex items-center gap-2 mt-6">
+            <input
+              type="checkbox"
+              checked={data.balcony || false}
+              onChange={e => onChange({ ...data, balcony: e.target.checked })}
+              disabled={!editable}
+              className="accent-blue-600 w-4 h-4 rounded"
+            />
+            Balcony
+          </label>
+          <label className="flex-1 font-medium text-gray-700 flex items-center gap-2 mt-6">
+            <input
+              type="checkbox"
+              checked={data.petsAllowed || false}
+              onChange={e => onChange({ ...data, petsAllowed: e.target.checked })}
+              disabled={!editable}
+              className="accent-blue-600 w-4 h-4 rounded"
+            />
+            Pets Allowed
           </label>
         </div>
-        <div className="flex gap-6 mt-auto w-full justify-start items-center flex-col sm:flex-row">
-          <label className="flex items-center gap-2 m-0 font-medium text-gray-700">
-            <input name="balcony" type="checkbox" checked={!!data.balcony} onChange={handleChange} className="accent-blue-600 w-5 h-5 rounded" disabled={!editable} />
-            Balcony/Terrace
+        {/* Description fields */}
+        {!isLookingFor && (
+          <label className="font-medium text-gray-700 w-full">
+            Describe your apartment (optional)
+            <textarea
+              name="myApartmentDescription"
+              value={data.myApartmentDescription || ""}
+              onChange={e => {
+                if (e.target.value.length <= 1000) onChange({ ...data, myApartmentDescription: e.target.value });
+              }}
+              maxLength={1000}
+              rows={4}
+              className="mt-2 w-full rounded-xl border border-blue-400 px-4 py-2 text-base sm:text-sm bg-white text-gray-900 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none"
+              placeholder="Describe the vibe, special features, or anything unique about your apartment..."
+              disabled={!editable}
+            />
+            <div className="text-xs text-gray-500 text-right">{(data.myApartmentDescription || "").length}/1000 characters</div>
           </label>
-          <label className="flex items-center gap-2 m-0 font-medium text-gray-700">
-            <input name="petsAllowed" type="checkbox" checked={!!data.petsAllowed} onChange={handleChange} className="accent-blue-600 w-5 h-5 rounded" disabled={!editable} />
-            Pets allowed
+        )}
+        {isLookingFor && (
+          <label className="font-medium text-gray-700 w-full">
+            Describe what you're looking for (optional)
+            <textarea
+              name="lookingForDescription"
+              value={data.lookingForDescription || ""}
+              onChange={e => {
+                if (e.target.value.length <= 1000) onChange({ ...data, lookingForDescription: e.target.value });
+              }}
+              maxLength={1000}
+              rows={4}
+              className="mt-2 w-full rounded-xl border border-blue-400 px-4 py-2 text-base sm:text-sm bg-white text-gray-900 transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-none"
+              placeholder="Describe your ideal apartment, lifestyle, or anything important to you..."
+              disabled={!editable}
+            />
+            <div className="text-xs text-gray-500 text-right">{(data.lookingForDescription || "").length}/1000 characters</div>
           </label>
-        </div>
+        )}
+
         {showNext && onNext && (
           <button
             type="submit"
