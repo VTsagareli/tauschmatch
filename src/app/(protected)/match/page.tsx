@@ -7,8 +7,8 @@ import AuthGuard from "@/components/AuthGuard";
 import MatchCard from "@/components/MatchCard";
 import { useAuth } from "@/hooks/useAuth";
 import { userService } from "@/services/userService";
-import { matchService, MatchResult } from "@/services/matchService";
-import { User } from "@/types";
+import { matchService } from "@/services/matchService";
+import { User, MatchResult } from "@/types";
 import { FaCheck } from 'react-icons/fa';
 
 const initialForm: ApartmentFormData = {
@@ -30,7 +30,6 @@ export default function MatchPage() {
   const [lookingFor, setLookingFor] = useState<ApartmentFormData>(initialForm);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [step, setStep] = useState(1); // 1: Your Apartment, 2: Looking For
-  const [isMobile, setIsMobile] = useState(false);
   const auth = useAuth();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -41,13 +40,7 @@ export default function MatchPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const yourApartmentRef = useRef<HTMLDivElement>(null);
   const [yourApartmentHeight, setYourApartmentHeight] = useState<number | undefined>(undefined);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const [loadingProgress, setLoadingProgress] = useState({ message: '', progress: 0 });
 
   useEffect(() => {
     function syncHeight() {
@@ -78,9 +71,39 @@ export default function MatchPage() {
     if (!auth?.user) return;
     
     setLoadingMatches(true);
+    setLoadingProgress({ message: 'Loading your profile...', progress: 0 });
+    
     try {
       console.log('Loading user and matches...');
+      
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setLoadingProgress(prev => {
+          const newProgress = Math.min(prev.progress + 5, 95);
+          let message = prev.message;
+          
+          if (newProgress < 20) {
+            message = 'Loading your profile...';
+          } else if (newProgress < 40) {
+            message = 'Fetching available listings...';
+          } else if (newProgress < 60) {
+            message = 'Analyzing listings with AI (batch 1/5)...';
+          } else if (newProgress < 70) {
+            message = 'Analyzing listings with AI (batch 2/5)...';
+          } else if (newProgress < 80) {
+            message = 'Analyzing listings with AI (batch 3/5)...';
+          } else if (newProgress < 90) {
+            message = 'Analyzing listings with AI (batch 4/5)...';
+          } else {
+            message = 'Analyzing listings with AI (batch 5/5)...';
+          }
+          
+          return { message, progress: newProgress };
+        });
+      }, 500);
+      
       // Get current user data
+      setLoadingProgress({ message: 'Loading your profile...', progress: 10 });
       const user = await userService.getUser(auth.user.uid);
       setCurrentUser(user);
       console.log('User loaded:', user ? 'yes' : 'no');
@@ -88,20 +111,41 @@ export default function MatchPage() {
       
       if (user) {
         // Find matches using AI-powered matching
+        setLoadingProgress({ message: 'Fetching available listings...', progress: 30 });
         console.log('Finding matches...');
+        
         // This now calls the client-side function which fetches from the API
-        const matchResults = await matchService.findMatches(user, {}, 10);
+        const matchResults = await matchService.findMatches(user, {}, 20);
         console.log('Matches found:', matchResults.length);
         console.log('Match results:', matchResults);
         
+        // Debug first match in detail
+        if (matchResults.length > 0) {
+          const firstMatch = matchResults[0];
+          console.log('🔍 FIRST MATCH DETAILED DEBUG:');
+          console.log('  Listing ID:', firstMatch.listing.id);
+          console.log('  Score:', firstMatch.score);
+          console.log('  Structured Score:', firstMatch.structuredScore);
+          console.log('  Semantic Score:', firstMatch.semanticScore);
+          console.log('  whatYouWantAndTheyHave:', firstMatch.whatYouWantAndTheyHave);
+          console.log('  whatYouHaveAndTheyWant:', firstMatch.whatYouHaveAndTheyWant);
+          console.log('  reasonBreakdown?.theirApartment?.descriptions:', firstMatch.reasonBreakdown?.theirApartment?.descriptions);
+          console.log('  reasonBreakdown?.yourApartment?.descriptions:', firstMatch.reasonBreakdown?.yourApartment?.descriptions);
+          console.log('Full first match object:', JSON.stringify(firstMatch, null, 2));
+        }
+        
+        clearInterval(progressInterval);
+        setLoadingProgress({ message: 'Complete!', progress: 100 });
         setMatches(matchResults);
       } else {
+        clearInterval(progressInterval);
         console.log('❌ No user data found');
         setError('No user data found. Please complete your profile first.');
       }
     } catch (error) {
       console.error('Error loading matches:', error);
       setError('Failed to load matches');
+      setLoadingProgress({ message: 'Error occurred', progress: 0 });
     } finally {
       setLoadingMatches(false);
       console.log('Loading matches completed');
@@ -131,11 +175,11 @@ export default function MatchPage() {
           minRooms: lookingFor.minRooms,
           minSquareMeters: lookingFor.minSquareMeters,
           maxColdRent: lookingFor.maxColdRent,
-          floor: lookingFor.floor,
+          floor: lookingFor.floor || "", // ✅ FIXED HERE
           balcony: lookingFor.balcony ?? false,
           petsAllowed: lookingFor.petsAllowed ?? false,
           lookingForDescription: lookingFor.lookingForDescription || ""
-        },
+        },        
       });
       setStep(2);
     } catch (e: any) {
@@ -167,11 +211,11 @@ export default function MatchPage() {
           minRooms: lookingFor.minRooms,
           minSquareMeters: lookingFor.minSquareMeters,
           maxColdRent: lookingFor.maxColdRent,
-          floor: lookingFor.floor,
+          floor: lookingFor.floor || "", // ✅ FIXED HERE
           balcony: lookingFor.balcony ?? false,
           petsAllowed: lookingFor.petsAllowed ?? false,
           lookingForDescription: lookingFor.lookingForDescription || ""
-        },
+        },        
       });
       
       // Load matches after saving preferences
@@ -191,9 +235,22 @@ export default function MatchPage() {
     window.open(listing.link, '_blank');
   };
 
-  const handleSave = (listing: any) => {
-    // TODO: Implement save functionality
-    console.log('Saving listing:', listing);
+  const handleSave = async (listing: any) => {
+    if (!auth?.user) {
+      setError('You must be logged in to save listings');
+      return;
+    }
+
+    try {
+      const { savedListingsService } = await import('@/services/savedListingsService');
+      await savedListingsService.saveListing(auth.user.uid, listing);
+      setSuccess('Listing saved!');
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error: any) {
+      console.error('Error saving listing:', error);
+      setError('Failed to save listing');
+    }
   };
 
 
@@ -201,9 +258,9 @@ export default function MatchPage() {
   return (
     <AuthGuard>
       <main className="h-screen flex flex-col md:flex-row items-center justify-center bg-blue-50 overflow-hidden relative w-full">
-        {/* Hamburger for mobile */}
+        {/* Drawer trigger */}
         <button
-          className="md:hidden fixed top-4 left-4 z-50 bg-white rounded-full shadow-lg p-3 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="fixed top-4 left-4 z-50 bg-white rounded-full shadow-lg p-3 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
           onClick={() => setDrawerOpen(true)}
           aria-label="Open menu"
         >
@@ -216,11 +273,8 @@ export default function MatchPage() {
         
         {/* Sidebar: drawer on mobile, fixed on md+ */}
         <Sidebar isDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-        <aside className="hidden md:flex fixed left-0 top-0 h-screen min-w-[200px] max-w-[220px] bg-white shadow-lg rounded-tr-3xl rounded-br-3xl z-10 flex-col justify-start">
-        <Sidebar />
-        </aside>
         
-        <div className="flex-1 flex flex-col items-center w-full max-w-full md:ml-[220px] px-2 sm:px-4 overflow-hidden" style={{ height: '100vh' }}>
+        <div className="flex-1 flex flex-col items-center w-full max-w-full px-2 sm:px-4 overflow-hidden" style={{ height: '100vh' }}>
           <div className="flex flex-col items-center w-full transition-all duration-500 pt-20 relative h-full">
             {/* Animated step/reveal flow */}
             <div className={`transition-all duration-700 ease-out ${showMatches ? 'opacity-0 pointer-events-none -translate-y-full' : 'opacity-100 translate-y-0'}`}>
@@ -264,25 +318,56 @@ export default function MatchPage() {
                 </div>
               )}
               {step === 2 && (
-                <div className="flex flex-col items-center mt-4">
+                <div className="flex flex-col items-center mt-4 gap-3">
                   <button
                     className={`bg-blue-600 text-white rounded-full px-8 py-4 font-bold text-lg shadow-md transition-all duration-700 ease-out hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed ${showMatches ? 'opacity-0 pointer-events-none -translate-y-16' : 'opacity-100 translate-y-0'}`}
                     onClick={handleSubmit}
-                    disabled={loading || !isLookingForComplete}
+                    disabled={loading || loadingMatches || !isLookingForComplete}
                   >
-                    {loading ? (
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
-                        Finding matches...
-                      </div>
-                    ) : (
-                      "Match"
-                    )}
+                    {loading || loadingMatches ? "Finding matches..." : "Match"}
                   </button>
-                  {loading && (
-                    <p className="text-gray-600 text-sm mt-2 text-center">
-                      AI is analyzing your preferences and finding the best matches...
-                    </p>
+                  
+                  {/* Loading info when matching */}
+                  {(loading || loadingMatches) && (
+                    <div className="text-center max-w-md w-full">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center justify-center gap-2 mb-3">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                          <p className="text-blue-800 font-semibold text-sm">
+                            {loadingProgress.message || 'Analyzing your preferences...'}
+                          </p>
+                        </div>
+                        
+                        {/* Progress bar */}
+                        <div className="w-full bg-blue-100 rounded-full h-2 mb-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                            style={{ width: `${loadingProgress.progress}%` }}
+                          ></div>
+                        </div>
+                        
+                        <p className="text-gray-600 text-xs">
+                          {loadingProgress.progress > 0 ? `${loadingProgress.progress}% complete` : 'Initializing...'}
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Our AI is comparing your apartment details with available listings and calculating match scores.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Edit Your Apartment button - only show when apartment is complete */}
+                  {isMyApartmentComplete && !loading && !loadingMatches && (
+                    <button
+                      className={`text-gray-600 text-sm font-medium hover:text-gray-800 underline transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded ${showMatches ? 'opacity-0 pointer-events-none -translate-y-16' : 'opacity-100 translate-y-0'}`}
+                      onClick={() => {
+                        setStep(1);
+                        setError("");
+                        setSuccess("");
+                      }}
+                    >
+                      Edit Your Apartment
+                    </button>
                   )}
                 </div>
               )}
@@ -291,7 +376,7 @@ export default function MatchPage() {
             </div>
             
             {/* Floating button that stays at the top */}
-            <div className="fixed top-8 z-20" style={{ left: '220px', right: '0', display: 'flex', justifyContent: 'center' }}>
+            <div className="fixed top-8 left-0 right-0 z-20 flex justify-center">
               <button
                 className={`bg-blue-600 text-white rounded-full px-8 py-4 font-bold text-lg shadow-md transition-all duration-700 ease-out hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 ${showMatches ? 'opacity-100 translate-y-0' : 'opacity-0 pointer-events-none -translate-y-16'}`}
                 onClick={() => { 
@@ -315,15 +400,15 @@ export default function MatchPage() {
         <div className={`transition-all duration-700 ease-out listings-scrollbar ${showMatches ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}`} style={{ 
           position: 'fixed', 
           top: '8rem', 
-          left: '220px', // Start after sidebar
-          right: '0', // Extend to right edge
-          width: 'calc(100% - 220px)', 
+          left: 0,
+          right: 0,
+          width: '100%', 
           maxWidth: '1200px',
           height: 'calc(100vh - 12rem)', 
           overflowY: 'auto', 
           visibility: showMatches ? 'visible' : 'hidden',
           zIndex: 15,
-          margin: '0 auto' // Center within the available space
+          margin: '0 auto'
         }}>
           
           {/* AI-Powered Matches */}

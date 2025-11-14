@@ -185,19 +185,57 @@ export default function ApartmentForm({ title, data, onChange, onNext, showNext,
         lookingForDescription: "I am looking for a cozy, modern 1-2 room apartment in a lively area such as Kreuzberg, Neukölln, or Friedrichshain. Ideally, the apartment has a balcony or terrace, is pet-friendly, and is close to cafés, restaurants, and public transport. I would love to live in a place with a young, social atmosphere where music and gatherings are welcome. Affordability and a vibrant neighborhood are important to me, as well as a space that feels welcoming and inspiring.",
       });
     } else {
+      // Random Berlin addresses
+      const randomAddresses = [
+        { street: "Warschauer Straße", number: "34", zipcode: "10243", city: "Berlin" },
+        { street: "Prenzlauer Allee", number: "48", zipcode: "10405", city: "Berlin" },
+        { street: "Oranienburger Straße", number: "15", zipcode: "10178", city: "Berlin" },
+        { street: "Bergmannstraße", number: "62", zipcode: "10961", city: "Berlin" },
+        { street: "Kantstraße", number: "120", zipcode: "10625", city: "Berlin" },
+        { street: "Sonnenallee", number: "88", zipcode: "12045", city: "Berlin" },
+        { street: "Karl-Marx-Allee", number: "120", zipcode: "10243", city: "Berlin" },
+        { street: "Kastanienallee", number: "85", zipcode: "10435", city: "Berlin" },
+        { street: "Schönhauser Allee", number: "160", zipcode: "10435", city: "Berlin" },
+        { street: "Torstraße", number: "170", zipcode: "10115", city: "Berlin" },
+        { street: "Gneisenaustraße", number: "52", zipcode: "10961", city: "Berlin" },
+        { street: "Simon-Dach-Straße", number: "23", zipcode: "10245", city: "Berlin" },
+        { street: "Revaler Straße", number: "14", zipcode: "10245", city: "Berlin" },
+        { street: "Weserstraße", number: "199", zipcode: "12045", city: "Berlin" },
+        { street: "Brunnenstraße", number: "75", zipcode: "13355", city: "Berlin" },
+      ];
+
+      // Random room count between 1-4
+      const randomRooms = Math.floor(Math.random() * 4) + 1;
+      
+      // Random square meters (between 30-100, roughly 25-35 per room)
+      const randomSquareMeters = Math.floor(Math.random() * 70) + 30;
+      
+      // Random rent (roughly 10-15 euros per sqm)
+      const randomRent = Math.floor(randomSquareMeters * (Math.random() * 5 + 10));
+      
+      // Random floor (0-5)
+      const randomFloor = Math.floor(Math.random() * 6);
+      
+      // Random boolean for balcony and pets
+      const randomBalcony = Math.random() > 0.5;
+      const randomPets = Math.random() > 0.5;
+
+      // Select random address
+      const randomAddress = randomAddresses[Math.floor(Math.random() * randomAddresses.length)];
+
       onChange({
         type: "Apartment",
-        street: "Stralauer Allee",
-        number: "22A",
-        zipcode: "10245",
-        city: "Berlin",
-        rooms: "3",
-        squareMeters: "50",
-        coldRent: "1100",
-        floor: "0",
-        balcony: true,
-        petsAllowed: true,
-        myApartmentDescription: "I currently live in a spacious, bright 3-room apartment in a quiet, family-friendly neighborhood in Berlin. The apartment features large windows, a modern kitchen, and a sunny balcony overlooking a green courtyard. It’s perfect for relaxing or working from home, and the area is peaceful with friendly neighbors, parks, and easy access to public transport. The rent is reasonable for the size, but as a single person, I find it a bit too large for my needs.",
+        street: randomAddress.street,
+        number: randomAddress.number,
+        zipcode: randomAddress.zipcode,
+        city: randomAddress.city,
+        rooms: randomRooms.toString(),
+        squareMeters: randomSquareMeters.toString(),
+        coldRent: randomRent.toString(),
+        floor: randomFloor.toString(),
+        balcony: randomBalcony,
+        petsAllowed: randomPets,
+        myApartmentDescription: "I currently live in a spacious, bright apartment in a quiet, family-friendly neighborhood in Berlin. The apartment features large windows, a modern kitchen, and good access to public transport. The area is peaceful with friendly neighbors, parks, and easy access to public transport.",
       });
     }
   }

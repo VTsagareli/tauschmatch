@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const auth = useAuth();
@@ -48,7 +49,7 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen flex flex-col justify-center items-center bg-blue-50 p-8 sm:p-4">
-      <section className="w-full max-w-md mx-auto p-8 sm:p-4 rounded-3xl shadow-lg bg-white flex flex-col items-center gap-6 border border-gray-200">
+      <section className="w-full max-w-md mx-auto p-8 sm:p-4 rounded-3xl shadow-lg bg-white flex flex-col items-center gap-6 border border-gray-200 animate-fadeInUp">
         <h1 className="text-3xl sm:text-2xl font-bold text-gray-900 m-0 tracking-tight text-center">Login</h1>
         <form className="w-full flex flex-col gap-5 mt-4" onSubmit={handleSubmit}>
           <label className="w-full text-left font-medium text-gray-700">
@@ -74,15 +75,26 @@ export default function LoginPage() {
             />
           </label>
           {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-          <button
-            type="submit"
-            className="bg-blue-600 text-white rounded-full px-8 py-4 sm:px-4 sm:py-3 font-bold text-lg sm:text-base mt-4 shadow-md transition hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 w-auto sm:w-full text-center"
-            disabled={loading}
-          >
-            {loading ? "Logging in..." : "Log In"}
-          </button>
+          <div className="flex flex-col gap-3 mt-4">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white rounded-full px-8 py-4 sm:px-4 sm:py-3 font-bold text-lg sm:text-base shadow-md transition hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 w-auto sm:w-full text-center"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Log In"}
+            </button>
+            <div className="flex items-center" aria-hidden="true">
+              <span className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 via-60% to-transparent rounded-full" />
+            </div>
+            <Link
+              href="/signup"
+              className="bg-white text-blue-600 border border-blue-200 rounded-full px-8 py-4 sm:px-4 sm:py-3 font-bold text-lg sm:text-base no-underline shadow-md transition hover:bg-blue-50 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 w-auto sm:w-full text-center"
+            >
+              Sign Up
+            </Link>
+          </div>
         </form>
       </section>
     </main>
   );
-} 
+}

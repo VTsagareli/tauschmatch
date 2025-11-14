@@ -1,8 +1,10 @@
-// Placeholder for shared types
+// Shared types for user, listings, and matching
+
 export interface User {
   uid: string;
   email: string;
   displayName?: string;
+
   myApartment?: {
     type: string;
     rooms: string;
@@ -16,6 +18,7 @@ export interface User {
     zipcode?: string;
     city?: string;
   };
+
   lookingFor?: {
     type: string;
     minRooms: string;
@@ -28,14 +31,18 @@ export interface User {
     street?: string;
     number?: string;
   };
+
+  // Descriptions for AI scoring
   description?: string;
+  offeredDescription?: string;
+  lookingForDescription?: string;
+
   createdAt?: any;
   updatedAt?: any;
 }
-export interface Apartment {}
-export interface Match {} 
+
 export interface Listing {
-  id?: string; // Firestore doc id or unique identifier
+  id: string; // Required — Firestore doc ID or unique identifier
   link: string;
   district: string;
   type: string;
@@ -47,17 +54,24 @@ export interface Listing {
   balconyOrTerrace: boolean;
   rooms: number;
   squareMeters: number;
-  // Optional fields
+
+  // Optional listing metadata
   features?: string[];
   heating?: string;
   flooring?: string;
   wbsRequired?: boolean;
-  description?: string; // what is being offered
-  offeredDescription?: string; // explicit: what is being offered (can be same as description)
-  lookingForDescription?: string; // what the listing author is looking for in a swap
+  description?: string; // offered
+  offeredDescription?: string;
+  lookingForDescription?: string;
   images?: string[];
   contactName?: string;
   dateListed?: string;
+  address?: string;
+  furnished?: boolean;
+  energyCertificate?: string;
+  otherAmenities?: string[];
+
+  // Optional structured criteria for search
   searchCriteria?: {
     districts?: string[];
     maxColdRent?: number;
@@ -65,17 +79,33 @@ export interface Listing {
     minSquareMeters?: number;
     [key: string]: any;
   };
-  address?: string;
-  furnished?: boolean;
-  energyCertificate?: string;
-  otherAmenities?: string[];
 }
-// Update the 'LookingFor' type to match Tauschwohnung search criteria style
+
 export interface LookingFor {
   districts: string[];
   maxColdRent?: number;
   minRooms?: number;
   minSquareMeters?: number;
-  // Optionally, other search criteria fields
   [key: string]: any;
-} 
+}
+
+export interface MatchReasonBreakdown {
+  structured: string[];
+  descriptions: string[];
+}
+
+export interface MatchResult {
+  listing: Listing;
+  score: number; // Combined score (60% structured + 40% semantic)
+  structuredScore?: number; // Structured match score (0-10)
+  semanticScore?: number; // Semantic/AI match score (0-10)
+  traditionalScore?: number; // Deprecated, use structuredScore
+  filters?: Record<string, unknown>;
+  reasonBreakdown?: {
+    theirApartment: MatchReasonBreakdown;
+    yourApartment: MatchReasonBreakdown;
+  };
+  whyThisMatches?: string[];
+  whatYouWantAndTheyHave?: string[]; // Semantic reasons
+  whatYouHaveAndTheyWant?: string[]; // Semantic reasons
+}

@@ -2,6 +2,26 @@ import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { User } from "@/types";
 
+// Recursively remove undefined values from objects (Firestore doesn't allow undefined)
+function removeUndefined(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return null;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(removeUndefined);
+  }
+  if (typeof obj === 'object') {
+    const cleaned: any = {};
+    for (const key in obj) {
+      if (obj[key] !== undefined) {
+        cleaned[key] = removeUndefined(obj[key]);
+      }
+    }
+    return cleaned;
+  }
+  return obj;
+}
+
 export const userService = {
   async createOrUpdateUser({ uid, email, displayName, myApartment, lookingFor }: {
     uid: string;
@@ -15,7 +35,7 @@ export const userService = {
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
       // Create new user document with empty apartment info, limited to Berlin
-      await setDoc(userRef, {
+      const newUserData = {
         email,
         displayName: displayName || "",
         myApartment: myApartment || {
@@ -40,13 +60,18 @@ export const userService = {
         },
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
+      };
+      await setDoc(userRef, removeUndefined(newUserData));
     } else {
-      // Update user preferences if provided
+      // Update user preferences if provided - sanitize to remove undefined values
       const updateData: any = { updatedAt: serverTimestamp() };
-      if (myApartment) updateData.myApartment = myApartment;
-      if (lookingFor) updateData.lookingFor = lookingFor;
-      await setDoc(userRef, updateData, { merge: true });
+      if (myApartment) {
+        updateData.myApartment = removeUndefined(myApartment);
+      }
+      if (lookingFor) {
+        updateData.lookingFor = removeUndefined(lookingFor);
+      }
+      await setDoc(userRef, removeUndefined(updateData), { merge: true });
     }
   },
 
@@ -58,5 +83,17 @@ export const userService = {
       return null;
     }
     return { uid, ...userSnap.data() } as User;
+  },
+
+  async updateDisplayName(uid: string, displayName: string) {
+    if (!uid) throw new Error("Missing uid");
+    const userRef = doc(db, "users", uid);
+    await setDoc(userRef, { displayName, updatedAt: serverTimestamp() }, { merge: true });
+  },
+
+  async updateUserEmail(uid: string, email: string) {
+    if (!uid || !email) throw new Error("Missing uid or email");
+    const userRef = doc(db, "users", uid);
+    await setDoc(userRef, { email, updatedAt: serverTimestamp() }, { merge: true });
   },
 }; 

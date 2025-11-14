@@ -30,7 +30,7 @@ export default function Sidebar({ isDrawer = false, open = false, onClose }: Sid
         />
         {/* Drawer */}
         <aside
-          className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg rounded-tr-3xl rounded-br-3xl z-50 flex flex-col items-center gap-8 p-8 transform transition-transform duration-200 ${open ? 'translate-x-0' : '-translate-x-full'}`}
+          className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg rounded-tr-3xl rounded-br-3xl z-50 flex flex-col items-center p-8 transform transition-transform duration-200 ${open ? 'translate-x-0' : '-translate-x-full'}`}
         >
           <button
             className="absolute top-4 right-4 text-gray-500 hover:text-gray-900 text-2xl focus:outline-none"
@@ -39,8 +39,24 @@ export default function Sidebar({ isDrawer = false, open = false, onClose }: Sid
           >
             &times;
           </button>
-          <nav className="w-full mt-8">
+          <nav className="w-full mt-8 flex flex-col flex-1">
             <ul className="list-none p-0 m-0 w-full flex flex-col gap-5">
+              <li>
+                <a
+                  href="/match"
+                  className="text-gray-900 font-semibold text-lg no-underline rounded-xl px-4 py-3 block transition-colors duration-150 hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
+                >
+                  Find Matches
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/saved"
+                  className="text-gray-900 font-semibold text-lg no-underline rounded-xl px-4 py-3 block transition-colors duration-150 hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
+                >
+                  Saved Listings
+                </a>
+              </li>
               <li>
                 <a
                   href="/profile"
@@ -49,15 +65,15 @@ export default function Sidebar({ isDrawer = false, open = false, onClose }: Sid
                   Profile
                 </a>
               </li>
-              <li>
-                <button
-                  onClick={handleLogout}
-                  className="text-red-500 font-semibold text-lg no-underline rounded-xl px-4 py-3 block w-full text-left transition-colors duration-150 hover:bg-red-50 focus:bg-red-100 focus:outline-none"
-                >
-                  Logout
-                </button>
-              </li>
             </ul>
+            <div className="mt-auto pt-4">
+              <button
+                onClick={handleLogout}
+                className="text-red-500 font-semibold text-lg no-underline rounded-xl px-4 py-3 block w-full text-left transition-colors duration-150 hover:bg-red-50 focus:bg-red-100 focus:outline-none"
+              >
+                Logout
+              </button>
+            </div>
           </nav>
         </aside>
       </>
@@ -66,9 +82,25 @@ export default function Sidebar({ isDrawer = false, open = false, onClose }: Sid
 
   // Fixed sidebar for desktop
   return (
-    <div className="w-full flex flex-col items-center gap-8 p-8">
-      <nav className="w-full">
+    <div className="w-full flex flex-col items-center p-8 h-full">
+      <nav className="w-full flex flex-col flex-1">
         <ul className="list-none p-0 m-0 w-full flex flex-col gap-5">
+          <li>
+            <a
+              href="/match"
+              className="text-gray-900 font-semibold text-lg no-underline rounded-xl px-4 py-3 block transition-colors duration-150 hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
+            >
+              Find Matches
+            </a>
+          </li>
+          <li>
+            <a
+              href="/saved"
+              className="text-gray-900 font-semibold text-lg no-underline rounded-xl px-4 py-3 block transition-colors duration-150 hover:bg-blue-50 focus:bg-blue-100 focus:outline-none"
+            >
+              Saved Listings
+            </a>
+          </li>
           <li>
             <a
               href="/profile"
@@ -77,15 +109,15 @@ export default function Sidebar({ isDrawer = false, open = false, onClose }: Sid
               Profile
             </a>
           </li>
-          <li>
-            <button
-              onClick={handleLogout}
-              className="text-red-500 font-semibold text-lg no-underline rounded-xl px-4 py-3 block w-full text-left transition-colors duration-150 hover:bg-red-50 focus:bg-red-100 focus:outline-none"
-            >
-              Logout
-            </button>
-          </li>
         </ul>
+        <div className="mt-auto pt-4">
+          <button
+            onClick={handleLogout}
+            className="text-red-500 font-semibold text-lg no-underline rounded-xl px-4 py-3 block w-full text-left transition-colors duration-150 hover:bg-red-50 focus:bg-red-100 focus:outline-none"
+          >
+            Logout
+          </button>
+        </div>
       </nav>
     </div>
   );
