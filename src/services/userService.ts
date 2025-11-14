@@ -30,7 +30,8 @@ export const userService = {
     myApartment?: any;
     lookingFor?: any;
   }) {
-    if (!uid || !email) throw new Error("Missing uid or email");
+    if (!uid) throw new Error("Missing uid");
+    // Email can be empty for anonymous/guest users
     const userRef = doc(db, "users", uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {

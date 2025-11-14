@@ -76,8 +76,9 @@ export default function ProfilePage() {
   };
 
   const displayName = userData?.displayName || auth?.user?.displayName || "User";
-  const email = auth?.user?.email || "No email";
+  const email = auth?.user?.email || (auth?.isAnonymous ? "Guest Account" : "No email");
   const memberSince = userData?.createdAt || null;
+  const isGuest = auth?.isAnonymous || false;
 
   const handleUpdateDisplayName = async () => {
     if (!auth?.updateUserDisplayName) return;
@@ -271,56 +272,70 @@ export default function ProfilePage() {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm text-gray-500">Email</p>
-                          {editingEmail ? (
-                            <div className="space-y-2 mt-1">
-                              <input
-                                type="email"
-                                value={newEmail || email}
-                                onChange={(e) => setNewEmail(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm"
-                                placeholder="Enter new email"
-                              />
-                              <input
-                                type="password"
-                                value={currentPassword}
-                                onChange={(e) => setCurrentPassword(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm"
-                                placeholder="Enter current password"
-                              />
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={handleUpdateEmail}
-                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
-                                >
-                                  Save
-                                </button>
+                          {!editingEmail && (
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-gray-900 font-medium">{email}</p>
+                                {isGuest && (
+                                  <p className="text-xs text-yellow-600 mt-1">Guest accounts don't have email addresses</p>
+                                )}
+                              </div>
+                              {!isGuest && (
                                 <button
                                   onClick={() => {
-                                    setEditingEmail(false);
-                                    setNewEmail("");
+                                    setEditingEmail(true);
+                                    setNewEmail(email);
                                     setCurrentPassword("");
                                     setError("");
                                   }}
-                                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-medium"
+                                  className="text-blue-600 hover:text-blue-700 text-sm font-medium ml-4"
                                 >
-                                  Cancel
+                                  Edit
                                 </button>
-                              </div>
+                              )}
                             </div>
-                          ) : (
-                            <div className="flex items-center justify-between">
-                              <p className="text-gray-900 font-medium">{email}</p>
-                              <button
-                                onClick={() => {
-                                  setEditingEmail(true);
-                                  setNewEmail(email);
-                                  setCurrentPassword("");
-                                  setError("");
-                                }}
-                                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                              >
-                                Edit
-                              </button>
+                          )}
+                          {editingEmail ? (
+                            <div className="space-y-2 mt-1">
+                              {isGuest ? (
+                                <p className="text-sm text-yellow-600">Guest accounts cannot update email. Please sign up for a full account.</p>
+                              ) : (
+                                <>
+                                  <input
+                                    type="email"
+                                    value={newEmail || email}
+                                    onChange={(e) => setNewEmail(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm"
+                                    placeholder="Enter new email"
+                                  />
+                                  <input
+                                    type="password"
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm"
+                                    placeholder="Enter current password"
+                                  />
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={handleUpdateEmail}
+                                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                                    >
+                                      Save
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setEditingEmail(false);
+                                        setNewEmail("");
+                                        setCurrentPassword("");
+                                        setError("");
+                                      }}
+                                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-medium"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           )}
                         </div>

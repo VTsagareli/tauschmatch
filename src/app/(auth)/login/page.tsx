@@ -20,7 +20,7 @@ export default function LoginPage() {
     );
   }
 
-  const { login, user, loading } = auth;
+  const { login, user, loading, signInAsGuest } = auth;
 
   useEffect(() => {
     if (user) {
@@ -44,6 +44,20 @@ export default function LoginPage() {
       router.replace("/match");
     } catch (err: any) {
       setError(err.message || "Login failed");
+    }
+  }
+
+  async function handleGuestLogin(e?: React.MouseEvent) {
+    e?.preventDefault();
+    setError("");
+    try {
+      console.log("Starting guest login...");
+      await signInAsGuest();
+      console.log("Guest login successful, redirecting...");
+      router.replace("/match");
+    } catch (err: any) {
+      console.error("Guest login error:", err);
+      setError(err.message || "Failed to continue as guest");
     }
   }
 
@@ -92,6 +106,17 @@ export default function LoginPage() {
             >
               Sign Up
             </Link>
+            <div className="flex items-center" aria-hidden="true">
+              <span className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 via-60% to-transparent rounded-full" />
+            </div>
+            <button
+              type="button"
+              onClick={handleGuestLogin}
+              className="bg-gray-100 text-gray-700 border border-gray-300 rounded-full px-8 py-4 sm:px-4 sm:py-3 font-bold text-lg sm:text-base shadow-md transition hover:bg-gray-200 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-gray-400 w-auto sm:w-full text-center"
+              disabled={loading}
+            >
+              {loading ? "Loading..." : "Continue without logging in"}
+            </button>
           </div>
         </form>
       </section>

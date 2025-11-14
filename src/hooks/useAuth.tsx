@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useState, useContext, createContext, ReactNode } from "react";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User, createUserWithEmailAndPassword, updateEmail, updatePassword, updateProfile, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, User, createUserWithEmailAndPassword, signInAnonymously, updateEmail, updatePassword, updateProfile, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { app } from "@/lib/firebase";
 import { userService } from "@/services/userService";
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAnonymous: boolean;
   login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   signup: (email: string, password: string, displayName?: string) => Promise<User>;
+  signInAsGuest: () => Promise<User>;
   updateUserEmail: (newEmail: string, password: string) => Promise<void>;
   updateUserPassword: (currentPassword: string, newPassword: string) => Promise<void>;
   updateUserDisplayName: (displayName: string) => Promise<void>;
@@ -72,6 +74,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return cred.user;
   };
 
+  const signInAsGuest = async () => {
+    setLoading(true);
+    try {
+      console.log("Signing in anonymously...");
+      const cred = await signInAnonymously(auth);
+      console.log("Anonymous sign-in successful:", cred.user.uid);
+      setUser(cred.user);
+      // Create guest user document in Firestore
+      console.log("Creating guest user in Firestore...");
+      await userService.createOrUpdateUser({
+        uid: cred.user.uid,
+        email: "",
+        displayName: "Guest",
+      });
+      console.log("Guest user created successfully");
+      setLoading(false);
+      return cred.user;
+    } catch (error: any) {
+      console.error("Error signing in as guest:", error);
+      setLoading(false);
+      throw error;
+    }
+  };
+
   const updateUserEmail = async (newEmail: string, password: string) => {
     if (!user) throw new Error("User not authenticated");
     setLoading(true);
@@ -117,8 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const isAnonymous = user?.isAnonymous || false;
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, signup, updateUserEmail, updateUserPassword, updateUserDisplayName }}>
+    <AuthContext.Provider value={{ user, loading, isAnonymous, login, logout, signup, signInAsGuest, updateUserEmail, updateUserPassword, updateUserDisplayName }}>
       {children}
     </AuthContext.Provider>
   );

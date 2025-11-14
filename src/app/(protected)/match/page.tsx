@@ -10,6 +10,7 @@ import { userService } from "@/services/userService";
 import { matchService } from "@/services/matchService";
 import { User, MatchResult } from "@/types";
 import { FaCheck } from 'react-icons/fa';
+import Link from 'next/link';
 
 const initialForm: ApartmentFormData = {
   type: "Apartment",
@@ -258,6 +259,16 @@ export default function MatchPage() {
   return (
     <AuthGuard>
       <main className="h-screen flex flex-col md:flex-row items-center justify-center bg-blue-50 overflow-hidden relative w-full">
+        {/* Guest mode banner */}
+        {auth?.isAnonymous && (
+          <div className="fixed top-0 left-0 right-0 bg-yellow-50 border-b border-yellow-200 z-40 px-4 py-2">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <p className="text-yellow-800 text-sm font-medium">
+                👤 You're browsing as a guest. <Link href="/signup" className="underline font-semibold">Sign up</Link> to save listings and access all features.
+              </p>
+            </div>
+          </div>
+        )}
         {/* Drawer trigger */}
         <button
           className="fixed top-4 left-4 z-50 bg-white rounded-full shadow-lg p-3 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
