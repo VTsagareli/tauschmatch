@@ -259,8 +259,19 @@ export const aiService = {
         score: result.score || 1,
         reasons: result.reasons || []
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in calculateCombinedScoreAndReasons:', error);
+      
+      // Check for OpenAI billing/quota errors
+      if (error?.code === 'insufficient_quota' || 
+          error?.code === 'billing_not_active' || 
+          error?.status === 429 ||
+          error?.message?.includes('quota') ||
+          error?.message?.includes('billing')) {
+        console.error('❌ OpenAI API quota/billing error - credits may be exhausted');
+        // You could throw this to show user a message, or return empty results
+      }
+      
       return { score: 1, reasons: [] };
     }
   },
@@ -301,8 +312,29 @@ export const aiService = {
       try {
         const batchResults = await this.processBatch(truncatedUserLookingFor, truncatedUserOffered, truncatedBatch, userStructuredData);
         allResults.push(...batchResults);
-      } catch (error) {
+      } catch (error: any) {
         console.error(`❌ Error processing batch ${Math.floor(i / BATCH_SIZE) + 1}:`, error);
+        
+        // Check for OpenAI billing/quota errors
+        if (error?.code === 'insufficient_quota' || 
+            error?.code === 'billing_not_active' || 
+            error?.status === 429 ||
+            error?.message?.includes('quota') ||
+            error?.message?.includes('billing')) {
+          console.error('❌ OpenAI API quota/billing error - stopping batch processing. Credits may be exhausted.');
+          // Break the loop to avoid wasting remaining credits on more failed calls
+          // Fill remaining listings with default scores
+          for (let j = i; j < listings.length; j++) {
+            allResults.push({ 
+              id: listings[j].id, 
+              score: 1, 
+              whatYouWantAndTheyHave: [], 
+              whatYouHaveAndTheyWant: [] 
+            });
+          }
+          break; // Exit the batch loop early
+        }
+        
         // Add empty results for this batch on error
         batch.forEach(listing => {
           allResults.push({ id: listing.id, score: 1, whatYouWantAndTheyHave: [], whatYouHaveAndTheyWant: [] });

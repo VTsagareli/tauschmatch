@@ -115,7 +115,7 @@ export default function LoginPage() {
               className="bg-gray-100 text-gray-700 border border-gray-300 rounded-full px-8 py-4 sm:px-4 sm:py-3 font-bold text-lg sm:text-base shadow-md transition hover:bg-gray-200 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-gray-400 w-auto sm:w-full text-center"
               disabled={loading}
             >
-              {loading ? "Loading..." : "Continue without logging in"}
+              {loading ? "Loading..." : "Continue as a guest"}
             </button>
           </div>
         </form>
