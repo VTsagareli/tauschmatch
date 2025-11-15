@@ -11,7 +11,7 @@ TauschMatch is a modern web application that helps people find apartment exchang
 - **🎯 Hybrid Scoring**: Combines structured data (60%) with semantic AI analysis (40%) for balanced results
 - **💾 Save Favorites**: Keep track of listings you're interested in
 - **👤 Guest Mode**: Try it out without creating an account
-- **📱 Responsive Design**: Works beautifully on mobile and desktop
+- **📱 Responsive Design**: Works beautifully on mobile and desktop (still under construction, please use web mode for now)
 - **🔒 Secure**: Firebase authentication and secure data handling
 
 ## ℹ️ Overview
@@ -76,7 +76,7 @@ Uses OpenAI GPT-3.5-turbo to analyze descriptions and understand what structured
 ### Quick Start
 
 1. **Sign up** or continue as a guest
-2. **Enter your apartment details**: rooms, size, rent, location, and a description
+2. **Enter your apartment details**: rooms, size, rent, location, and a description (Or hit "autofill example" to get a random apartment info)
 3. **Describe what you're looking for**: your preferences in natural language
 4. **Click "Match"** and let AI find compatible swaps
 5. **Browse results** with detailed match scores and reasons
