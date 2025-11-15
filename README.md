@@ -25,58 +25,51 @@ TauschMatch solves a real problem for people looking to swap apartments in Berli
 3. **Match intelligently** by comparing both sides: what you want vs what they have, and what you have vs what they want
 4. **Score matches** using a hybrid approach that values both hard criteria (budget, rooms, location) and soft criteria (lifestyle, atmosphere, neighborhood feel)
 
-### How It Works
+### How It Works: Beyond Traditional Filtering
 
-The matching algorithm operates in two phases:
+Traditional apartment exchange websites (like tauschwohnung.com) use simple filtering: you set criteria (max rent, min rooms, district) and either get results that match or are excluded. TauschMatch goes beyond this with intelligent **scoring and ranking** that considers nuance and two-way compatibility.
 
-**Phase 1: Structured Matching (60% of score)**
-- Filters listings based on hard criteria: budget, number of rooms, square meters, location
-- Compares your apartment details with their requirements
-- Fast, reliable, and transparent
-
-**Phase 2: Semantic Matching (40% of score)**
-- Uses OpenAI GPT-3.5-turbo to analyze descriptions
-- Understands lifestyle preferences, neighborhood characteristics, and apartment atmosphere
-- Finds connections that structured filters would miss
-- Provides detailed match reasons explaining why each listing is a good fit
-
-### 🔍 How TauschMatch Differs from Traditional Filtering
-
-Traditional apartment exchange websites (like tauschwohnung.com) use simple filtering: you set criteria (max rent, min rooms, district) and either get results that match or don't. TauschMatch goes beyond this with intelligent **scoring and ranking**.
-
-#### Traditional Filtering
+#### What Traditional Filtering Does
 - **Binary pass/fail**: Listings either match your filters or are excluded
 - **No ranking**: All results treated equally, usually sorted by date
 - **One-way**: Only checks "what you want vs what they have"
 - **No nuance**: A €750 apartment and €850 apartment (when you set max €800) are both excluded, even though €850 might be acceptable
 
-#### TauschMatch's Structured Matching
+#### How TauschMatch Works Differently
 
-**1. Scoring, Not Just Filtering**
-After initial filtering, every listing gets a **0-10 score** based on how well it matches:
-- **€600** (20% under budget) → Excellent score (35/35 points)
-- **€800** (at budget) → Good score (30/35 points)
-- **€880** (10% over) → Still acceptable (22/35 points) — not excluded!
-- **€960** (20% over) → Lower score (12/35 points) but still shown
-- **3 rooms** (when you want 2) → Bonus points for extra space (28/30 points)
-- **1 room** (when you want 2) → Acceptable but lower score (18/30 points)
+TauschMatch uses a **two-phase matching system** that scores and ranks every listing:
 
-**2. Two-Way Matching**
-Unlike traditional sites, TauschMatch checks **both directions**:
-- **"What you want vs what they have"**: Traditional filtering
-- **"What you have vs what they want"**: Ensures mutual compatibility for swaps
-  - Example: You have a balcony → They want "outdoor space" → Perfect match!
+**Phase 1: Structured Matching (60% of score)**
 
-**3. Weighted Criteria**
-Uses weighted scoring (budget 35%, rooms 30%, district 20%, type 10%, size 5%), so a slightly over-budget listing in your preferred district can still rank highly.
+Instead of simple filtering, TauschMatch **scores** each listing on a 0-10 scale based on how well it matches:
 
-**4. Smart District Matching**
-Detects related districts (e.g., "Kreuzberg" matches "Friedrichshain-Kreuzberg") and gives partial credit instead of excluding.
+- **Budget scoring** (35% weight): 
+  - €600 (20% under) → Excellent (35/35 points)
+  - €800 (at budget) → Good (30/35 points)
+  - €880 (10% over) → Still acceptable (22/35 points) — **not excluded!**
+  - €960 (20% over) → Lower score (12/35 points) but still shown
+  
+- **Room matching** (30% weight):
+  - 3 rooms (when you want 2) → Bonus for extra space (28/30 points)
+  - 2 rooms (exact match) → Perfect (30/30 points)
+  - 1 room (1 less) → Acceptable (18/30 points)
+  
+- **District matching** (20% weight): Detects related districts (e.g., "Kreuzberg" matches "Friedrichshain-Kreuzberg") and gives partial credit
 
-**5. Ranked Results**
-Shows best matches first, not just chronological order. This means the most compatible swaps appear at the top of your results.
+- **Two-way compatibility**: Unlike traditional sites, TauschMatch checks **both directions**:
+  - "What you want vs what they have" (traditional)
+  - "What you have vs what they want" (ensures mutual compatibility)
+    - Example: You have a balcony → They want "outdoor space" → Perfect match!
 
-**Result**: You see more relevant matches, ranked by actual compatibility, not just by when they were posted.
+**Phase 2: Semantic Matching (40% of score)**
+
+Uses OpenAI GPT-3.5-turbo to analyze descriptions and understand what structured data can't capture:
+- Lifestyle preferences and neighborhood characteristics
+- Apartment atmosphere and vibe
+- Soft requirements that don't fit into filters
+- Provides detailed match reasons explaining why each listing is a good fit
+
+**Result**: Matches are **ranked by compatibility score** (combined structured + semantic), with the best swaps appearing first—not just by when they were posted. You see more relevant matches, ranked by actual compatibility.
 
 ## 🚀 Usage
 
