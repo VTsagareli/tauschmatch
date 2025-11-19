@@ -15,15 +15,16 @@ export async function POST(request: Request) {
     console.log('📋 /api/find-matches called');
     const offeredDesc = user.offeredDescription || user.description || '';
     const lookingForDesc = user.lookingForDescription || '';
-    console.log('  User:', { 
-      uid: user.uid, 
-      hasMyApartment: !!user.myApartment,
-      hasLookingFor: !!user.lookingFor,
-      hasOfferedDescription: !!offeredDesc,
-      hasLookingForDescription: !!lookingForDesc,
-      offeredDescLength: offeredDesc.length,
-      lookingForDescLength: lookingForDesc.length
-    });
+    console.log('🔍 User Description Check:');
+    console.log('  User UID:', user.uid);
+    console.log('  Offered Description Length:', offeredDesc.length);
+    console.log('  Offered Description (first 200 chars):', offeredDesc.substring(0, 200));
+    console.log('  Looking For Description Length:', lookingForDesc.length);
+    console.log('  Looking For Description (first 200 chars):', lookingForDesc.substring(0, 200));
+    console.log('  Has MyApartment:', !!user.myApartment);
+    console.log('  MyApartment:', user.myApartment);
+    console.log('  Has LookingFor:', !!user.lookingFor);
+    console.log('  LookingFor:', user.lookingFor);
     console.log('  Filters:', filters);
     console.log('  Limit:', limit);
 

@@ -59,6 +59,9 @@ export const userService = {
           balcony: false,
           petsAllowed: false,
         },
+        // Save descriptions at root level for AI matching
+        offeredDescription: myApartment?.myApartmentDescription || '',
+        lookingForDescription: lookingFor?.lookingForDescription || '',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -68,9 +71,17 @@ export const userService = {
       const updateData: any = { updatedAt: serverTimestamp() };
       if (myApartment) {
         updateData.myApartment = removeUndefined(myApartment);
+        // Also save myApartmentDescription at root level as offeredDescription for AI matching
+        if (myApartment.myApartmentDescription) {
+          updateData.offeredDescription = myApartment.myApartmentDescription;
+        }
       }
       if (lookingFor) {
         updateData.lookingFor = removeUndefined(lookingFor);
+        // Also save lookingForDescription at root level for AI matching
+        if (lookingFor.lookingForDescription) {
+          updateData.lookingForDescription = lookingFor.lookingForDescription;
+        }
       }
       await setDoc(userRef, removeUndefined(updateData), { merge: true });
     }

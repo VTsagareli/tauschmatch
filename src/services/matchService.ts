@@ -119,8 +119,9 @@ export const matchService = {
       if (useAIScoring && listings.length > 0) {
         try {
           // Get descriptions from correct locations
-          const userLookingFor = user.lookingForDescription || '';
-          const userOffered = user.offeredDescription || user.description || '';
+          // Check root level first, then fall back to nested locations
+          const userLookingFor = user.lookingForDescription || user.lookingFor?.lookingForDescription || '';
+          const userOffered = user.offeredDescription || user.description || user.myApartment?.myApartmentDescription || '';
           
           // Get structured data to help GPT understand what the user actually has
           const userHasRooms = user.myApartment?.rooms || '';
