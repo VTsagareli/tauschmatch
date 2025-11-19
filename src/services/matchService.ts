@@ -107,7 +107,7 @@ export const matchService = {
         const userDescription = this.createUserDescription(user);
         userPrefs = await aiService.extractPreferences(userDescription);
         console.log('✅ AI preferences extracted successfully');
-      } catch (error) {
+      } catch {
         console.log('⚠️ AI service failed, using traditional scoring only');
         useAIScoring = false;
         userPrefs = this.createFallbackPreferences(user);

@@ -66,7 +66,7 @@ function getErrorMessages(data: ApartmentFormData, isLookingFor: boolean) {
 export default function ApartmentForm({ title, data, onChange, onNext, showNext, editable = true }: Props) {
   const isLookingFor = title.toLowerCase().includes("looking");
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const errors = getErrorMessages(data, isLookingFor);
+  // const errors = getErrorMessages(data, isLookingFor); // Unused - validation handled inline
   const [animate, setAnimate] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
