@@ -8,13 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "clean:scrapers": "rm -rf dist/scrapers",
-    "build:scrapers": "tsc --project tsconfig.scrapers.json",
-    "run:scraper": "node dist/scrapers/$npm_config_name.js",
     "build:scripts": "tsc --project tsconfig.json --outDir dist/scripts src/scripts/*.ts",
-    "run:script": "tsx src/scripts/$npm_config_name.ts",
-    "build:firebase": "next build",
-    "deploy": "npm run build:firebase && firebase deploy --only hosting,functions"
+    "run:script": "tsx src/scripts/$npm_config_name.ts"
   },
   "dependencies": {
     "dotenv": "^17.2.0",

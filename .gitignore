@@ -39,11 +39,15 @@ next-env.d.ts
 .firebase/
 firebase-debug.log
 firebase-debug.*.log
+
+# Log files
 *.log
+scraper_*.log
+import_log.txt
 
 # Service account key (should not be committed)
 serviceAccountKey.json
 
-# Scraper outputs
-scraper_*.log
-import_log.txt
+# Build outputs
+dist/
+build/
