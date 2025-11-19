@@ -343,7 +343,11 @@ export default function ProfilePage() {
                           <p className="text-sm text-gray-500">Password</p>
                           {editingPassword ? (
                             <div className="space-y-2 mt-1">
-                              <input
+                              {isGuest ? (
+                                <p className="text-sm text-yellow-600">Guest accounts cannot update password. Please sign up for a full account.</p>
+                              ) : (
+                                <>
+                                  <input
                                 type="password"
                                 value={currentPassword}
                                 onChange={(e) => setCurrentPassword(e.target.value)}
@@ -384,22 +388,31 @@ export default function ProfilePage() {
                                   Cancel
                                 </button>
                               </div>
+                                </>
+                              )}
                             </div>
                           ) : (
                             <div className="flex items-center justify-between">
-                              <p className="text-gray-900 font-medium">••••••••</p>
-                              <button
-                                onClick={() => {
-                                  setEditingPassword(true);
-                                  setCurrentPassword("");
-                                  setNewPassword("");
-                                  setConfirmPassword("");
-                                  setError("");
-                                }}
-                                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                              >
-                                Edit
-                              </button>
+                              <div>
+                                <p className="text-gray-900 font-medium">••••••••</p>
+                                {isGuest && (
+                                  <p className="text-xs text-yellow-600 mt-1">Guest accounts don't have passwords</p>
+                                )}
+                              </div>
+                              {!isGuest && (
+                                <button
+                                  onClick={() => {
+                                    setEditingPassword(true);
+                                    setCurrentPassword("");
+                                    setNewPassword("");
+                                    setConfirmPassword("");
+                                    setError("");
+                                  }}
+                                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                                >
+                                  Edit
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
