@@ -68,6 +68,10 @@ export default function MatchCard({ match, onContact, onSave }: MatchCardProps) 
     descriptions: match.whatYouHaveAndTheyWant || [],
   };
 
+  // Check semantic reasons from all possible sources
+  const semanticWhatYouHave = match.whatYouHaveAndTheyWant || match.reasonBreakdown?.yourApartment?.descriptions || yourReasons.descriptions || [];
+  const semanticWhatYouWant = match.whatYouWantAndTheyHave || match.reasonBreakdown?.theirApartment?.descriptions || theirReasons.descriptions || [];
+  
   // Debug: Log what we have
   if (process.env.NODE_ENV === 'development') {
     const debugInfo = {
@@ -84,6 +88,9 @@ export default function MatchCard({ match, onContact, onSave }: MatchCardProps) 
       structuredScore: match.structuredScore,
       theirDescriptionsCount: theirReasons.descriptions?.length || 0,
       yourDescriptionsCount: yourReasons.descriptions?.length || 0,
+      // Final counts after fallback chain
+      finalWhatYouHaveCount: semanticWhatYouHave.length,
+      finalWhatYouWantCount: semanticWhatYouWant.length,
       // Show actual arrays
       whatYouHaveArray: match.whatYouHaveAndTheyWant || [],
       whatYouWantArray: match.whatYouWantAndTheyHave || [],
@@ -265,15 +272,15 @@ export default function MatchCard({ match, onContact, onSave }: MatchCardProps) 
               Score: {match.semanticScore ?? 'N/A'}/10
             </span>
           </div>
-          {(yourReasons.descriptions && yourReasons.descriptions.length > 0) || (theirReasons.descriptions && theirReasons.descriptions.length > 0) ? (
+          {(semanticWhatYouHave.length > 0 || semanticWhatYouWant.length > 0) ? (
             <div className="space-y-4 text-sm">
               {renderReasonColumn('What you have & they want', {
                 structured: [], // No structured reasons in semantic section
-                descriptions: yourReasons.descriptions || []
+                descriptions: semanticWhatYouHave
               })}
               {renderReasonColumn('What they have & you want', {
                 structured: [], // No structured reasons in semantic section
-                descriptions: theirReasons.descriptions || []
+                descriptions: semanticWhatYouWant
               })}
             </div>
           ) : (
