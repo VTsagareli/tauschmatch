@@ -6,6 +6,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const router = useRouter();
 
+  const { user, loading } = auth || {};
+
+  useEffect(() => {
+    if (auth && !loading && !user) {
+      router.replace("/login");
+    }
+  }, [auth, user, loading, router]);
+
   if (!auth) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center">
@@ -13,14 +21,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-
-  const { user, loading } = auth;
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-    }
-  }, [user, loading, router]);
 
   if (loading || (!user && typeof window !== "undefined")) {
     return (

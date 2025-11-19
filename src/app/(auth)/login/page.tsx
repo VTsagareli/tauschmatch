@@ -12,6 +12,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  const { login, user, loading, signInAsGuest } = auth || {};
+
+  useEffect(() => {
+    if (user) {
+      router.replace("/match");
+    }
+  }, [user, router]);
+
   if (!auth) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center">
@@ -19,14 +27,6 @@ export default function LoginPage() {
       </div>
     );
   }
-
-  const { login, user, loading, signInAsGuest } = auth;
-
-  useEffect(() => {
-    if (user) {
-      router.replace("/match");
-    }
-  }, [user, router]);
 
   if (user) {
     return (

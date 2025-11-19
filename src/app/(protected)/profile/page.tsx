@@ -2,11 +2,8 @@
 
 import React from "react";
 import AuthGuard from "@/components/AuthGuard";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function ProfilePage() {
-  const auth = useAuth();
-
   return (
     <AuthGuard>
       <main className="min-h-screen bg-blue-50">
