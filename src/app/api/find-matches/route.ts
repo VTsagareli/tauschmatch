@@ -13,8 +13,8 @@ export async function POST(request: Request) {
     }
 
     console.log('📋 /api/find-matches called');
-    const offeredDesc = user.myApartment?.myApartmentDescription || user.offeredDescription || user.description || '';
-    const lookingForDesc = user.lookingFor?.lookingForDescription || user.lookingForDescription || '';
+    const offeredDesc = user.offeredDescription || user.description || '';
+    const lookingForDesc = user.lookingForDescription || '';
     console.log('  User:', { 
       uid: user.uid, 
       hasMyApartment: !!user.myApartment,
