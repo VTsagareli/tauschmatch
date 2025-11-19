@@ -19,7 +19,7 @@ async function debugMatches() {
     
     // 2. Show some sample listings
     console.log('\n2. Sample listings:');
-    testSnapshot.forEach((doc, index) => {
+    testSnapshot.docs.forEach((doc, index) => {
       const data = doc.data();
       console.log(`Listing ${index + 1}:`, {
         id: doc.id,
