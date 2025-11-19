@@ -38,6 +38,7 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!login) return;
     setError("");
     try {
       await login(email, password);
@@ -49,6 +50,7 @@ export default function LoginPage() {
 
   async function handleGuestLogin(e?: React.MouseEvent) {
     e?.preventDefault();
+    if (!signInAsGuest) return;
     setError("");
     try {
       console.log("Starting guest login...");
