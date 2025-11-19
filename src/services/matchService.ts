@@ -595,7 +595,7 @@ for (const listing of listings) {
     // For now, we'll compare basic fields that are likely mentioned
     if (!listingCriteria && lookingForDescription.length > 0) {
       // Extract room requirements from description (simple heuristic)
-      const lookingFor = listing.lookingForDescription.toLowerCase();
+      const lookingFor = (listing.lookingForDescription || '').toLowerCase();
       
       // Check rooms (if user has enough rooms mentioned in their looking for)
       if (myApartment.rooms) {
