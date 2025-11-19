@@ -119,7 +119,7 @@ export const matchService = {
       if (useAIScoring && listings.length > 0) {
         try {
           // Get descriptions from correct locations
-          const userLookingFor = user.lookingFor?.lookingForDescription || user.lookingForDescription || '';
+          const userLookingFor = user.lookingForDescription || '';
           const userOffered = user.myApartment?.myApartmentDescription || user.offeredDescription || user.description || '';
           
           // Get structured data to help GPT understand what the user actually has
