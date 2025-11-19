@@ -21,8 +21,16 @@ export async function GET() {
     }
     
     // 2. Show some sample listings
-    const sampleListings = [];
-    testSnapshot.forEach((doc, index) => {
+    const sampleListings: Array<{
+      id: string;
+      district: any;
+      type: any;
+      coldRent: any;
+      rooms: any;
+      squareMeters: any;
+      hasDescription: boolean;
+    }> = [];
+    testSnapshot.forEach((doc) => {
       const data = doc.data();
       sampleListings.push({
         id: doc.id,
@@ -44,7 +52,7 @@ export async function GET() {
     // 4. Check field types
     console.log('\n4. Checking field types...');
     const firstDoc = testSnapshot.docs[0];
-    let fieldTypes = {};
+    let fieldTypes: Record<string, string> = {};
     if (firstDoc) {
       const data = firstDoc.data();
       fieldTypes = {
