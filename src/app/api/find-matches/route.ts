@@ -5,10 +5,15 @@ import { User } from '@/types';
 
 export async function POST(request: Request) {
   try {
-    const { user, filters, limit } = await request.json() as { user: User, filters: any, limit: number };
+    const body = await request.json() as { user: User, filters: any, limit?: number };
+    const { user, filters, limit } = body;
+
+    if (!user) {
+      return NextResponse.json({ error: 'User data is required.' }, { status: 400 });
+    }
 
     console.log('📋 /api/find-matches called');
-    console.log('  User:', user ? { 
+    console.log('  User:', { 
       uid: user.uid, 
       hasMyApartment: !!user.myApartment,
       hasLookingFor: !!user.lookingFor,
@@ -16,13 +21,9 @@ export async function POST(request: Request) {
       hasLookingForDescription: !!(user.lookingForDescription || user.lookingFor?.lookingForDescription),
       offeredDescLength: (user.myApartment?.myApartmentDescription || user.offeredDescription || user.description || '').length,
       lookingForDescLength: (user.lookingFor?.lookingForDescription || user.lookingForDescription || '').length
-    } : 'none');
+    });
     console.log('  Filters:', filters);
     console.log('  Limit:', limit);
-
-    if (!user) {
-      return NextResponse.json({ error: 'User data is required.' }, { status: 400 });
-    }
 
     // Since this is now on the server, we need a way to call the original server-side findMatches logic.
     // Let's assume we rename the original logic to findMatchesOnServer
