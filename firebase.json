@@ -2,27 +2,5 @@
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
-  },
-  "hosting": {
-    "public": "public",
-    "rewrites": [
-      {
-        "source": "**",
-        "function": "nextjs"
-      }
-    ],
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
-  },
-  "functions": {
-    "source": "functions",
-    "runtime": "nodejs18",
-    "predeploy": [
-      "npm --prefix \"$RESOURCE_DIR\" install",
-      "npm run build"
-    ]
   }
 } 
