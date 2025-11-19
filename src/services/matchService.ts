@@ -120,7 +120,7 @@ export const matchService = {
         try {
           // Get descriptions from correct locations
           const userLookingFor = user.lookingForDescription || '';
-          const userOffered = user.myApartment?.myApartmentDescription || user.offeredDescription || user.description || '';
+          const userOffered = user.offeredDescription || user.description || '';
           
           // Get structured data to help GPT understand what the user actually has
           const userHasRooms = user.myApartment?.rooms || '';
