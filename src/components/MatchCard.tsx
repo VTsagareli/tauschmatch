@@ -148,7 +148,7 @@ export default function MatchCard({ match, onContact, onSave }: MatchCardProps) 
         {match.listing.images && match.listing.images.length > 0 ? (
           <img
             src={match.listing.images[0]}
-            alt={match.listing.title || 'Listing image'}
+            alt={match.listing.address || match.listing.district || 'Listing image'}
             className="w-full h-48 object-cover rounded-t-2xl"
           />
         ) : (
