@@ -256,16 +256,16 @@ export default function MatchCard({ match, onContact, onSave }: MatchCardProps) 
           </div>
         </div>
 
-        {/* Semantic Matching Section - Only show if there's a semantic score > 1 or semantic reasons */}
-        {(match.semanticScore && match.semanticScore > 1) || (yourReasons.descriptions && yourReasons.descriptions.length > 0) || (theirReasons.descriptions && theirReasons.descriptions.length > 0) ? (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-3">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-blue-700 font-semibold">✓</span>
-              <h4 className="font-semibold text-gray-900">Semantic Matching (AI Analysis)</h4>
-              <span className="text-xs text-gray-500 ml-auto">
-                Score: {match.semanticScore ?? 'N/A'}/10
-              </span>
-            </div>
+        {/* Semantic Matching Section */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-3">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-blue-700 font-semibold">✓</span>
+            <h4 className="font-semibold text-gray-900">Semantic Matching (AI Analysis)</h4>
+            <span className="text-xs text-gray-500 ml-auto">
+              Score: {match.semanticScore ?? 'N/A'}/10
+            </span>
+          </div>
+          {(yourReasons.descriptions && yourReasons.descriptions.length > 0) || (theirReasons.descriptions && theirReasons.descriptions.length > 0) ? (
             <div className="space-y-4 text-sm">
               {renderReasonColumn('What you have & they want', {
                 structured: [], // No structured reasons in semantic section
@@ -276,8 +276,10 @@ export default function MatchCard({ match, onContact, onSave }: MatchCardProps) 
                 descriptions: theirReasons.descriptions || []
               })}
             </div>
-          </div>
-        ) : null}
+          ) : (
+            <p className="text-xs text-gray-500 italic">No AI analysis available. Add descriptions to your apartment and preferences for AI-powered matching.</p>
+          )}
+        </div>
 
       </div>
       {/* Action & listing CTA */}
