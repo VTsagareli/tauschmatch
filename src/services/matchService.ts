@@ -673,9 +673,7 @@ for (const listing of listings) {
     // Also check searchCriteria if it exists (legacy support)
     if (listingCriteria) {
       if (listingCriteria.districts && listingCriteria.districts.length > 0) {
-        const userDistricts = myApartment.districts && Array.isArray(myApartment.districts) && myApartment.districts.length > 0
-          ? myApartment.districts
-          : user.lookingFor?.districts || [];
+        const userDistricts = user.lookingFor?.districts || [];
         const overlap = userDistricts.filter(d => listingCriteria.districts!.includes(d));
         if (overlap.length > 0) {
           reasons.push(`Located in a district they requested (${overlap.join(', ')})`);
