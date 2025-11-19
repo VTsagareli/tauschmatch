@@ -84,35 +84,7 @@ async function analyzeListingDescription(description) {
   }
 }
 
-async function calculateSemanticMatchScore(userPrefs, listingAnalysis) {
-  try {
-    const prompt = `
-      Based on the user's preferences and the listing's analysis, calculate a compatibility score from 0 to 100.
-      
-      User Preferences: ${JSON.stringify(userPrefs)}
-      Listing Analysis: ${JSON.stringify(listingAnalysis)}
 
-      Return a JSON object with two keys: "score" (a number) and "reasons" (an array of strings explaining the score).
-      Focus on lifestyle, atmosphere, and key amenities.
-    `;
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.2,
-    });
-
-    const response = completion.choices[0]?.message?.content;
-    if (!response) return { score: 0, reasons: ["No response from GPT-based scoring."]};
-    
-    const result = JSON.parse(response);
-    return { score: result.score || 0, reasons: result.reasons || [] };
-
-  } catch (error) {
-    console.error('[AI] calculateSemanticMatchScore with GPT error:', error);
-    return { score: 0, reasons: ["Error during GPT-based scoring."]};
-  }
-}
 
 // --- TEST DATA ---
 

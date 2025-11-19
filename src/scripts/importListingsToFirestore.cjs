@@ -67,24 +67,28 @@ async function importListings() {
     const sanitized = sanitize(listing);
     console.log("Attempting to import:", JSON.stringify(sanitized, null, 2));
     try {
-      // Check if a listing with the same link already exists
+      // Check if a listing with the same link already exists (link is unique identifier)
       const existing = await db.collection("listings").where("link", "==", sanitized.link).get();
       if (!existing.empty) {
-        // If the new listing has an image and the old one does not, update it
+        // Duplicate found - update it with fresh data (data might have changed)
         const doc = existing.docs[0];
         const oldData = doc.data();
         const newHasImage = sanitized.images && sanitized.images.length > 0 && sanitized.images[0];
         const oldHasImage = oldData.images && oldData.images.length > 0 && oldData.images[0];
-        if (newHasImage && !oldHasImage) {
-          await doc.ref.update(sanitized);
-          console.log(`Updated existing listing with image: ${sanitized.link}`);
-        } else {
-          console.log(`Listing already exists, skipping: ${sanitized.link}`);
-        }
+        
+        // Always update to get fresh data, but log what changed
+        await doc.ref.update(sanitized);
+        const changes = [];
+        if (newHasImage && !oldHasImage) changes.push("added image");
+        if (oldData.description !== sanitized.description) changes.push("description updated");
+        if (oldData.coldRent !== sanitized.coldRent) changes.push("rent updated");
+        const changeMsg = changes.length > 0 ? ` (${changes.join(", ")})` : "";
+        console.log(`✓ Updated existing listing: ${sanitized.link}${changeMsg}`);
       } else {
+        // New listing - add it
         await db.collection("listings").add(sanitized);
         success++;
-        console.log(`Imported: ${sanitized.link}`);
+        console.log(`✓ Imported new listing: ${sanitized.link}`);
       }
     } catch (e) {
       failed++;
