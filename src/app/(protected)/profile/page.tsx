@@ -154,7 +154,6 @@ export default function ProfilePage() {
     }
   };
 
-
   return (
     <AuthGuard>
       <main className="min-h-screen bg-blue-50">
