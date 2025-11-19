@@ -203,9 +203,11 @@ export default function MatchCard({ match, onContact, onSave }: MatchCardProps) 
         {/* Filter criteria as bullet points */}
         {match.filters && (
           <ul className="list-disc list-inside text-xs text-gray-600 mb-2">
-            {Object.entries(match.filters).map(([key, value]) => (
-              value ? <li key={key}><span className="font-medium">{key}:</span> {Array.isArray(value) ? value.join(', ') : value}</li> : null
-            ))}
+            {Object.entries(match.filters || {}).map(([key, value]) => {
+              if (!value) return null;
+              const displayValue = Array.isArray(value) ? value.join(', ') : String(value);
+              return <li key={key}><span className="font-medium">{key}:</span> {displayValue}</li>;
+            })}
           </ul>
         )}
 
