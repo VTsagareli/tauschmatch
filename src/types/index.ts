@@ -17,6 +17,7 @@ export interface User {
     number?: string;
     zipcode?: string;
     city?: string;
+    myApartmentDescription?: string;
   };
 
   lookingFor?: {
@@ -30,6 +31,7 @@ export interface User {
     districts?: string[];
     street?: string;
     number?: string;
+    lookingForDescription?: string;
   };
 
   // Descriptions for AI scoring
