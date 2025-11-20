@@ -77,31 +77,31 @@ export default function MatchPage() {
     try {
       console.log('Loading user and matches...');
       
-      // Simulate progress updates
+      // Simulate progress updates (more realistic based on actual work)
       const progressInterval = setInterval(() => {
         setLoadingProgress(prev => {
-          const newProgress = Math.min(prev.progress + 5, 95);
+          const newProgress = Math.min(prev.progress + 2, 95); // Slower increment for more realistic progress
           let message = prev.message;
           
-          if (newProgress < 20) {
+          if (newProgress < 10) {
             message = 'Loading your profile...';
-          } else if (newProgress < 40) {
+          } else if (newProgress < 25) {
             message = 'Fetching available listings...';
-          } else if (newProgress < 60) {
-            message = 'Analyzing listings with AI (batch 1/5)...';
-          } else if (newProgress < 70) {
-            message = 'Analyzing listings with AI (batch 2/5)...';
+          } else if (newProgress < 45) {
+            message = 'Analyzing listings with AI (this may take 30-60 seconds)...';
+          } else if (newProgress < 65) {
+            message = 'Processing AI analysis (batch 1/4)...';
           } else if (newProgress < 80) {
-            message = 'Analyzing listings with AI (batch 3/5)...';
+            message = 'Processing AI analysis (batch 2/4)...';
           } else if (newProgress < 90) {
-            message = 'Analyzing listings with AI (batch 4/5)...';
+            message = 'Processing AI analysis (batch 3/4)...';
           } else {
-            message = 'Analyzing listings with AI (batch 5/5)...';
+            message = 'Finalizing results...';
           }
           
           return { message, progress: newProgress };
         });
-      }, 500);
+      }, 800); // Update every 800ms for smoother progress
       
       // Get current user data
       setLoadingProgress({ message: 'Loading your profile...', progress: 10 });
@@ -112,11 +112,12 @@ export default function MatchPage() {
       
       if (user) {
         // Find matches using AI-powered matching
-        setLoadingProgress({ message: 'Fetching available listings...', progress: 30 });
+        setLoadingProgress({ message: 'Fetching available listings...', progress: 25 });
         console.log('Finding matches...');
         
         // This now calls the client-side function which fetches from the API
-        const matchResults = await matchService.findMatches(user, {}, 20);
+        // Limit to fewer results initially to speed up matching (can increase later)
+        const matchResults = await matchService.findMatches(user, {}, 15);
         console.log('Matches found:', matchResults.length);
         console.log('Match results:', matchResults);
         
@@ -193,6 +194,7 @@ export default function MatchPage() {
   async function handleSubmit() {
     if (!auth?.user) return;
     setLoading(true);
+    setLoadingMatches(true); // Start loading matches
     setSuccess("");
     setError("");
     try {
@@ -229,6 +231,7 @@ export default function MatchPage() {
       setError(e.message || "Failed to save preferences.");
     } finally {
       setLoading(false);
+      // Don't set loadingMatches to false here - loadUserAndMatches handles it
     }
   }
 
@@ -330,16 +333,8 @@ export default function MatchPage() {
               )}
               {step === 2 && (
                 <div className="flex flex-col items-center mt-4 gap-3">
-                  <button
-                    className={`bg-blue-600 text-white rounded-full px-8 py-4 font-bold text-lg shadow-md transition-all duration-700 ease-out hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed ${showMatches ? 'opacity-0 pointer-events-none -translate-y-16' : 'opacity-100 translate-y-0'}`}
-                    onClick={handleSubmit}
-                    disabled={loading || loadingMatches || !isLookingForComplete}
-                  >
-                    {loading || loadingMatches ? "Finding matches..." : "Match"}
-                  </button>
-                  
-                  {/* Loading info when matching */}
-                  {(loading || loadingMatches) && (
+                  {/* Show loading box instead of button when matching */}
+                  {(loading || loadingMatches) ? (
                     <div className="text-center max-w-md w-full">
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <div className="flex items-center justify-center gap-2 mb-3">
@@ -361,10 +356,18 @@ export default function MatchPage() {
                           {loadingProgress.progress > 0 ? `${loadingProgress.progress}% complete` : 'Initializing...'}
                         </p>
                         <p className="text-gray-500 text-xs mt-1">
-                          Our AI is comparing your apartment details with available listings and calculating match scores.
+                          Our AI is comparing your apartment details with available listings and calculating match scores. This may take 30-60 seconds.
                         </p>
                       </div>
                     </div>
+                  ) : (
+                    <button
+                      className={`bg-blue-600 text-white rounded-full px-8 py-4 font-bold text-lg shadow-md transition-all duration-700 ease-out hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed ${showMatches ? 'opacity-0 pointer-events-none -translate-y-16' : 'opacity-100 translate-y-0'}`}
+                      onClick={handleSubmit}
+                      disabled={loading || loadingMatches || !isLookingForComplete}
+                    >
+                      Match
+                    </button>
                   )}
                   
                   {/* Edit Your Apartment button - only show when apartment is complete */}

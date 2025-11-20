@@ -76,8 +76,8 @@ export const matchService = {
       }
       
       // Limit results (no ordering by createdAt since imported listings don't have it)
-      // Request more results to filter by minimum score later
-      const requestedLimit = Math.max(limitResults * 2, 30); // Get more to filter down
+      // Request more results to filter by minimum score later, but cap at reasonable number for speed
+      const requestedLimit = Math.min(Math.max(limitResults * 2, 20), 25); // Cap at 25 to speed up matching
       q = query(q, limit(requestedLimit));
       
       console.log('Executing Firestore query...');

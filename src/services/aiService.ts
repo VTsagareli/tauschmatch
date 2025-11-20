@@ -295,7 +295,7 @@ export const aiService = {
     // Batch listings into smaller groups to avoid token limit
     // GPT-3.5-turbo has ~16k tokens, we need to stay well under that
     // Each listing adds ~200-400 tokens, so we'll process 5-8 at a time
-    const BATCH_SIZE = 6; // Conservative batch size to avoid token limit
+    const BATCH_SIZE = 8; // Slightly larger batch size to reduce API calls and speed up matching
     const allResults: Array<{ id: string; score: number; whatYouWantAndTheyHave: string[]; whatYouHaveAndTheyWant: string[] }> = [];
     
     for (let i = 0; i < listings.length; i += BATCH_SIZE) {
@@ -343,7 +343,7 @@ export const aiService = {
       
       // Small delay between batches to avoid rate limiting
       if (i + BATCH_SIZE < listings.length) {
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 150)); // Reduced delay slightly for faster processing
       }
     }
     
