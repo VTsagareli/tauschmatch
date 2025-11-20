@@ -288,11 +288,11 @@ export default function MatchPage() {
         {/* Sidebar: drawer on mobile, fixed on md+ */}
         <Sidebar isDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
         
-        <div className="flex-1 flex flex-col items-center w-full max-w-full px-2 sm:px-4 overflow-y-auto" style={{ height: '100vh' }}>
-          <div className="flex flex-col items-center w-full transition-all duration-500 pt-20 sm:pt-24 relative min-h-full pb-8">
+        <div className="flex-1 flex flex-col items-center w-full max-w-full px-2 sm:px-4 overflow-hidden" style={{ height: '100vh' }}>
+          <div className="flex flex-col items-center w-full transition-all duration-500 pt-20 relative h-full">
             {/* Animated step/reveal flow */}
-            <div className={`transition-all duration-700 ease-out w-full ${showMatches ? 'opacity-0 pointer-events-none -translate-y-full' : 'opacity-100 translate-y-0'}`}>
-              <div className="w-full md:flex md:flex-row md:gap-14 md:justify-center md:items-center md:mb-8 relative mb-4">
+            <div className={`transition-all duration-700 ease-out ${showMatches ? 'opacity-0 pointer-events-none -translate-y-full' : 'opacity-100 translate-y-0'}`}>
+              <div className="w-full md:flex md:flex-row md:gap-14 md:justify-center md:items-center md:mb-8 relative">
                 {/* Step 1: Your Apartment */}
                 <div
                   ref={yourApartmentRef}
@@ -332,43 +332,14 @@ export default function MatchPage() {
                 </div>
               )}
               {step === 2 && (
-                <div className="flex flex-col items-center mt-4 mb-8 gap-3 w-full px-4">
-                  {/* Show loading box instead of button when matching */}
-                  {(loading || loadingMatches) ? (
-                    <div className="text-center max-w-md w-full mx-auto py-4">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div className="flex items-center justify-center gap-2 mb-3">
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                          <p className="text-blue-800 font-semibold text-sm">
-                            {loadingProgress.message || 'Analyzing your preferences...'}
-                          </p>
-                        </div>
-                        
-                        {/* Progress bar */}
-                        <div className="w-full bg-blue-100 rounded-full h-2 mb-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
-                            style={{ width: `${loadingProgress.progress}%` }}
-                          ></div>
-                        </div>
-                        
-                        <p className="text-gray-600 text-xs">
-                          {loadingProgress.progress > 0 ? `${loadingProgress.progress}% complete` : 'Initializing...'}
-                        </p>
-                        <p className="text-gray-500 text-xs mt-1">
-                          Our AI is comparing your apartment details with available listings and calculating match scores. This may take 30-60 seconds.
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      className={`bg-blue-600 text-white rounded-full px-8 py-4 font-bold text-lg shadow-md transition-all duration-700 ease-out hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed ${showMatches ? 'opacity-0 pointer-events-none -translate-y-16' : 'opacity-100 translate-y-0'}`}
-                      onClick={handleSubmit}
-                      disabled={loading || loadingMatches || !isLookingForComplete}
-                    >
-                      Match
-                    </button>
-                  )}
+                <div className="flex flex-col items-center mt-4 gap-3">
+                  <button
+                    className={`bg-blue-600 text-white rounded-full px-8 py-4 font-bold text-lg shadow-md transition-all duration-700 ease-out hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60 disabled:cursor-not-allowed ${showMatches ? 'opacity-0 pointer-events-none -translate-y-16' : 'opacity-100 translate-y-0'}`}
+                    onClick={handleSubmit}
+                    disabled={loading || loadingMatches || !isLookingForComplete}
+                  >
+                    {loading || loadingMatches ? "Finding matches..." : "Match"}
+                  </button>
                   
                   {/* Edit Your Apartment button - only show when apartment is complete */}
                   {isMyApartmentComplete && !loading && !loadingMatches && (
@@ -388,6 +359,37 @@ export default function MatchPage() {
               {success && <div className="text-green-600 mt-4 text-center font-medium">{success}</div>}
               {error && <div className="text-red-600 mt-4 text-center font-medium">{error}</div>}
             </div>
+            
+            {/* Fixed loading overlay in center of screen */}
+            {(loading || loadingMatches) && (
+              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-20 pointer-events-none">
+                <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4 pointer-events-auto">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                      <p className="text-blue-800 font-semibold text-sm">
+                        {loadingProgress.message || 'Analyzing your preferences...'}
+                      </p>
+                    </div>
+                    
+                    {/* Progress bar */}
+                    <div className="w-full bg-blue-100 rounded-full h-2 mb-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${loadingProgress.progress}%` }}
+                      ></div>
+                    </div>
+                    
+                    <p className="text-gray-600 text-xs">
+                      {loadingProgress.progress > 0 ? `${loadingProgress.progress}% complete` : 'Initializing...'}
+                    </p>
+                    <p className="text-gray-500 text-xs mt-1">
+                      Our AI is comparing your apartment details with available listings and calculating match scores. This may take 30-60 seconds.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             
             {/* Floating button that stays at the top */}
             <div className="fixed top-8 left-0 right-0 z-20 flex justify-center">
