@@ -288,11 +288,11 @@ export default function MatchPage() {
         {/* Sidebar: drawer on mobile, fixed on md+ */}
         <Sidebar isDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
         
-        <div className="flex-1 flex flex-col items-center w-full max-w-full px-2 sm:px-4 overflow-hidden" style={{ height: '100vh' }}>
-          <div className="flex flex-col items-center w-full transition-all duration-500 pt-20 relative h-full">
+        <div className="flex-1 flex flex-col items-center w-full max-w-full px-2 sm:px-4 overflow-y-auto" style={{ height: '100vh' }}>
+          <div className="flex flex-col items-center w-full transition-all duration-500 pt-20 sm:pt-24 relative min-h-full pb-8">
             {/* Animated step/reveal flow */}
-            <div className={`transition-all duration-700 ease-out ${showMatches ? 'opacity-0 pointer-events-none -translate-y-full' : 'opacity-100 translate-y-0'}`}>
-              <div className="w-full md:flex md:flex-row md:gap-14 md:justify-center md:items-center md:mb-8 relative">
+            <div className={`transition-all duration-700 ease-out w-full ${showMatches ? 'opacity-0 pointer-events-none -translate-y-full' : 'opacity-100 translate-y-0'}`}>
+              <div className="w-full md:flex md:flex-row md:gap-14 md:justify-center md:items-center md:mb-8 relative mb-4">
                 {/* Step 1: Your Apartment */}
                 <div
                   ref={yourApartmentRef}
@@ -332,10 +332,10 @@ export default function MatchPage() {
                 </div>
               )}
               {step === 2 && (
-                <div className="flex flex-col items-center mt-4 gap-3">
+                <div className="flex flex-col items-center mt-4 mb-8 gap-3 w-full px-4">
                   {/* Show loading box instead of button when matching */}
                   {(loading || loadingMatches) ? (
-                    <div className="text-center max-w-md w-full">
+                    <div className="text-center max-w-md w-full mx-auto py-4">
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <div className="flex items-center justify-center gap-2 mb-3">
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
