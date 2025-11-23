@@ -12,6 +12,7 @@
     "run:script": "tsx src/scripts/$npm_config_name.ts"
   },
   "dependencies": {
+    "@vercel/analytics": "^1.5.0",
     "dotenv": "^17.2.0",
     "firebase": "^11.10.0",
     "firebase-admin": "^13.4.0",
